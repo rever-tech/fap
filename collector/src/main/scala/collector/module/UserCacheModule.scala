@@ -22,3 +22,5 @@ object UserCacheModule extends TwitterModule {
     new OnMemoryCacheRepository[UserID, UserInfo]()
   }
 }
+
+
