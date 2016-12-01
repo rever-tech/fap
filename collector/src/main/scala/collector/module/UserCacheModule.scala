@@ -11,16 +11,16 @@ import collector.service.{UserCacheService, UserCacheServiceImpl}
 /**
   * Created by SangDang on 9/16/16.
   */
-object UserCacheModule extends TwitterModule {
+object CollectorModule extends TwitterModule {
   override def configure: Unit = {
-    bind[UserCacheService].to[UserCacheServiceImpl]
+//    bind[UserCacheService].to[UserCacheServiceImpl]
   }
 
-  @Singleton
-  @Provides
-  def providesUserCacheRepository(): CacheRepository[UserID, UserInfo] = {
-    new OnMemoryCacheRepository[UserID, UserInfo]()
-  }
+//  @Singleton
+//  @Provides
+//  def providesUserCacheRepository(): CacheRepository[UserID, UserInfo] = {
+//    new OnMemoryCacheRepository[UserID, UserInfo]()
+//  }
 }
 
 

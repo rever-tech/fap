@@ -1,5 +1,6 @@
 package collector.controller.http
 
+import collector.domain.AnalyticRequest
 import com.twitter.finatra.http.Controller
 
 /**

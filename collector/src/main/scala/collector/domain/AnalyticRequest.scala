@@ -1,4 +1,4 @@
-package collector.controller.http
+package collector.domain
 
 /**
  * Created by zkidkid on 11/30/16.
