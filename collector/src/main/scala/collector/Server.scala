@@ -17,7 +17,6 @@ class Server extends HttpServer {
 
   override protected def defaultFinatraHttpPort: String = ZConfig.getString("server.http.port", ":8080")
 
-
   override protected def disableAdminHttpServer: Boolean = ZConfig.getBoolean("server.admin.disable", true)
 
   override val modules = Seq(AnalyticsModule)

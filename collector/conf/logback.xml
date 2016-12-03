@@ -61,13 +61,21 @@
     <appender-ref ref="ACCESS"/>
   </appender>
 
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- encoders are  by default assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder -->
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
   <!-- ===================================================== -->
   <!-- Package Config -->
   <!-- ===================================================== -->
 
   <!-- Root Config -->
-  <root level="${log_level:-INFO}">
-    <appender-ref ref="ASYNC-SERVICE"/>
+  <root level="${log_level:-WARN}">
+    <appender-ref ref="STDOUT"/>
   </root>
 
   <!-- Access Logging -->

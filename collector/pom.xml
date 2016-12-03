@@ -24,6 +24,13 @@
             <version>${scala.version}</version>
         </dependency>
 
+        <!-- Kafka client -->
+        <dependency>
+            <groupId>net.cakesolutions</groupId>
+            <artifactId>scala-kafka-client_2.11</artifactId>
+            <version>0.10.1.1</version>
+        </dependency>
+
         <!-- Finatra -->
         <dependency>
             <groupId>com.twitter</groupId>
@@ -50,6 +57,12 @@
         </dependency>
 
         <!-- Test Deps -->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka_2.11</artifactId>
+            <version>0.10.1.0</version>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.twitter</groupId>
             <artifactId>finatra-thrift_2.11</artifactId>
@@ -319,6 +332,11 @@
             <id>twitter-repo</id>
             <name>twitter-repo</name>
             <url>https://maven.twttr.com</url>
+        </repository>
+        <repository>
+            <id>cakesolutions-repo</id>
+            <name>cakesolutions-repo</name>
+            <url>https://dl.bintray.com/cakesolutions/maven/</url>
         </repository>
     </repositories>
     <pluginRepositories>

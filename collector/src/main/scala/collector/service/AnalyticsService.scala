@@ -2,7 +2,12 @@ package collector.service
 
 import javax.inject.Inject
 
+import cakesolutions.kafka.KafkaProducer
+import cakesolutions.kafka.KafkaProducer.Conf
 import collector.domain.AnalyticRequest
+import collector.util.ZConfig
+import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.serialization.{IntegerSerializer, StringSerializer}
 
 import scala.concurrent.ExecutionContext
 
@@ -26,9 +31,23 @@ object KafkaAnalyticsConsumerBuilder extends AnalyticsConsumerBuilder {
   }
 }
 
+object KafkaConsumer {
+  final val producer = KafkaProducer(
+    Conf(ZConfig.getConfig("kafka"), new IntegerSerializer, new StringSerializer)
+  )
+
+  def send(record: ProducerRecord[Integer, String]): Unit = {
+    producer.send(record)
+  }
+}
+
 class KafkaConsumer(request: AnalyticRequest) extends AnalyticsConsumer {
+
   override def run(): Unit = {
-    //ToDo: @tiennt implement push data to kafka
+
+    KafkaConsumer.send(
+      new ProducerRecord[Integer, String](
+        request.name, null, request.timestamp, request.version, request.data))
   }
 }
 
