@@ -23,15 +23,15 @@ trait KafkaWorker[K, V] extends Worker[ConsumerRecord[K, V]]
 
 abstract class AbstractKafkaWorker[K, V](config: String) extends KafkaWorker[K, V] {
 
-  abstract def keyDeserialize(): org.apache.kafka.common.serialization.Deserializer[K]
+  def keyDeserialize(): org.apache.kafka.common.serialization.Deserializer[K]
 
-  abstract def valueDeserialize(): org.apache.kafka.common.serialization.Deserializer[V]
+  def valueDeserialize(): org.apache.kafka.common.serialization.Deserializer[V]
 
-  abstract def subscribeList(): Seq[String]
+  def subscribeList(): Seq[String]
 
-  abstract def beforeStart(): Unit
+  def beforeStart(): Unit
 
-  abstract def afterStop(): Unit
+  def afterStop(): Unit
 
   val kafkaConfig = Conf(ConfigFactory.parseString(config), keyDeserialize(), valueDeserialize())
 
@@ -43,7 +43,6 @@ abstract class AbstractKafkaWorker[K, V](config: String) extends KafkaWorker[K, 
 
   val isStop = new AtomicBoolean(false)
 
-
   def run(): Unit = {
     beforeStart()
     while (isStop.get() == false) {
@@ -54,6 +53,5 @@ abstract class AbstractKafkaWorker[K, V](config: String) extends KafkaWorker[K, 
     }
     afterStop()
   }
-
 
 }
