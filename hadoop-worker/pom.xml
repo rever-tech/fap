@@ -17,6 +17,13 @@
         <mainClass>hadoop-worker.MainApp</mainClass>
     </properties>
     <dependencies>
+        <!-- Kafka -->
+        <dependency>
+            <groupId>net.cakesolutions</groupId>
+            <artifactId>scala-kafka-client_2.11</artifactId>
+            <version>0.10.1.1</version>
+        </dependency>
+
         <!-- Scala -->
         <dependency>
             <groupId>org.scala-lang</groupId>
@@ -319,6 +326,11 @@
             <id>twitter-repo</id>
             <name>twitter-repo</name>
             <url>https://maven.twttr.com</url>
+        </repository>
+        <repository>
+            <id>cakesolutions-repo</id>
+            <name>cakesolutions-repo</name>
+            <url>https://dl.bintray.com/cakesolutions/maven/</url>
         </repository>
     </repositories>
     <pluginRepositories>

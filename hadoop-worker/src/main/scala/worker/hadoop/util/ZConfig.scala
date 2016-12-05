@@ -1,14 +1,14 @@
-package hadoop-worker.util
+package worker.hadoop.util
 
 import java.io.{File, PrintStream}
 
-import com.typesafe.config._
+import com.typesafe.config.ConfigFactory
 
 import scala.collection.JavaConversions._
 
 /**
-  * Created by SangDang on 9/15/16.
-  */
+ * Created by SangDang on 9/15/16.
+ */
 object ZConfig {
   val env = System.getProperty("mode", "development")
   val config = ConfigFactory.load().withFallback(ConfigFactory.parseFile(new File("conf/" + env + ".conf")))
