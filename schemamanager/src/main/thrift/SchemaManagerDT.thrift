@@ -1,7 +1,7 @@
 #@namespace scala schemamanager.domain
 
 struct TSchemaData {
-    1:string nameToType
+    1:map<string, string> nameToType
 }
 
 struct TSchema {
