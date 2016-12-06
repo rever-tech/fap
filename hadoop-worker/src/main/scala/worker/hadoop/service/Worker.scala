@@ -16,6 +16,12 @@ import scala.collection.JavaConversions._
 trait Worker[T] {
 
   def process(t: T): Unit
+
+  def start(): Unit
+
+  def stop(): Unit
+
+  def isRunning(): Boolean
 }
 
 trait KafkaWorker[K, V] extends Worker[ConsumerRecord[K, V]]
@@ -41,17 +47,28 @@ abstract class AbstractKafkaWorker[K, V](config: String) extends KafkaWorker[K, 
 
   val KafkaPollTimeInMs = 100
 
-  val isStop = new AtomicBoolean(false)
+  val flag = new AtomicBoolean(false)
 
-  def run(): Unit = {
+  val isRunning = new AtomicBoolean(false)
+
+  def start(): Unit = {
+    isRunning.set(true)
     beforeStart()
-    while (isStop.get() == false) {
+    while (flag.get() == false) {
       val kafkaRecords = kafkaConsumer.poll(KafkaPollTimeInMs)
       kafkaRecords.toIterable.foreach {
         process
       }
     }
     afterStop()
+    isRunning.set(false)
+
   }
+
+  def stop(): Unit = flag.set(true)
+
+
+  override def isRunning(): Boolean = isRunning.get()
+
 
 }
