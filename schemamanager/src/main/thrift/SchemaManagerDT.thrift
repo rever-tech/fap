@@ -10,3 +10,12 @@ struct TSchema {
     3: TSchemaData schema
 }
 
+struct TGetSchemaResp{
+    1: required bool exist
+    2: optional TSchema data
+}
+
+struct TGetSchemasResp{
+    1: required bool exist
+    2: optional list<TSchema> data
+}

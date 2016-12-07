@@ -17,9 +17,9 @@ trait SchemaService {
 
   def addSchema(schema: Schema): Future[Boolean]
 
-  def getSchemas(name: String): Future[Seq[TSchema]]
+  def getSchemas(name: String): Future[Option[Seq[TSchema]]]
 
-  def getSchema(name: String, version: Int): Future[TSchema]
+  def getSchema(name: String, version: Int): Future[Option[TSchema]]
 
   def getAllSchemaName(): Future[Seq[String]]
 
@@ -32,8 +32,7 @@ trait SchemaService {
   def deleteAllSchema(): Future[Boolean]
 }
 
-class LevelDBSchemaService @Inject()(levelDbDir: String) extends SchemaService {
-
+case class LevelDBSchemaService @Inject()(levelDbDir: String) extends SchemaService {
   val options = new Options()
     .createIfMissing(true)
     .compressionType(CompressionType.NONE)
@@ -91,25 +90,26 @@ class LevelDBSchemaService @Inject()(levelDbDir: String) extends SchemaService {
     addOk
   }
 
-  override def getSchemas(name: String): Future[Seq[TSchema]] = futurePool {
+  override def getSchemas(name: String): Future[Option[Seq[TSchema]]] = futurePool {
     val schemaNameVersionsKey = getBytes(s"${schemaNameVersionsPrefix}_$name")
     db.get(schemaNameVersionsKey) match {
-      case null => Seq.empty
+      case null => None
       case x => {
         val versions = JsonUtils.fromJson[Set[Int]](getString(x))
-        versions.map(version => {
+        val nameVersions = versions.map(version => {
           val schemaNameVersionKey = getBytes(s"${schemaNameVersionPrefix}_${name}_${version}")
           Schema(name, version, JsonUtils.fromJson[SchemaData](getString(db.get(schemaNameVersionKey))))
         }).toSeq
+        Some(nameVersions)
       }
     }
   }
 
-  override def getSchema(name: String, version: Int): Future[TSchema] = futurePool {
+  override def getSchema(name: String, version: Int): Future[Option[TSchema]] = futurePool {
     val schemaNameVersionKey = getBytes(s"${schemaNameVersionPrefix}_${name}_${version}")
     db.get(schemaNameVersionKey) match {
-      case null => null
-      case x =>Schema(name, version, JsonUtils.fromJson[SchemaData](getString(x)))
+      case null => None
+      case x => Some(Schema(name, version, JsonUtils.fromJson[SchemaData](getString(x))))
     }
   }
 

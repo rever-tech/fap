@@ -27,7 +27,7 @@ class SchemaServiceTest extends IntegrationTest {
     "add schema" in {
       val schema = TSchema(name, version, schemaData)
       assertResult(true)(Await.result(schemaService.addSchema(schema)))
-      val schemaResp = Await.result(schemaService.getSchema(name, version))
+      val schemaResp = Await.result(schemaService.getSchema(name, version)).get
       assertResult(name)(schemaResp.name)
       assertResult(version)(schemaResp.version)
       assertResult(0)((schemaResp.schema.nameToType.toSet diff schemaData.nameToType.toSet).toMap.size)
@@ -42,7 +42,7 @@ class SchemaServiceTest extends IntegrationTest {
         val schema = TSchema(name, version + i, schemaData)
         assertResult(true)(Await.result(schemaService.addSchema(schema)))
       }
-      val schemaVersionsResp = Await.result(schemaService.getSchemas(name))
+      val schemaVersionsResp = Await.result(schemaService.getSchemas(name)).get
       assertResult(numVersion)(schemaVersionsResp.size)
       schemaVersionsResp.foreach(schemaResp => {
         assertResult(name)(schemaResp.name)
@@ -59,9 +59,8 @@ class SchemaServiceTest extends IntegrationTest {
         val schema = TSchema(name, version + i, schemaData)
         assertResult(true)(Await.result(schemaService.addSchema(schema)))
       }
-      assertResult(Schema(name, version + numVersion, schemaData))(T2Schema(Await.result(schemaService.getSchema(name, version + numVersion))))
-      assertResult(null)(Await.result(schemaService.getSchema(name, version + numVersion + 1)))
-
+      assertResult(Schema(name, version + numVersion, schemaData))(T2Schema(Await.result(schemaService.getSchema(name, version + numVersion)).get))
+      assertResult(None)(Await.result(schemaService.getSchema(name, version + numVersion + 1)))
       assertResult(true)(Await.result(schemaService.deleteSchemaName(name)))
     }
     "get all schema name" in {
@@ -126,22 +125,22 @@ class SchemaServiceTest extends IntegrationTest {
       assertResult(true)(Await.result(schemaService.addSchema(schema2)))
       assertResult(true)(Await.result(schemaService.addSchema(schema3)))
 
-      assertResult(schema)(Await.result(schemaService.getSchema(schema.name, schema.version)))
-      assertResult(schema1)(Await.result(schemaService.getSchema(schema1.name, schema1.version)))
-      assertResult(schema2)(Await.result(schemaService.getSchema(schema2.name, schema2.version)))
-      assertResult(schema3)(Await.result(schemaService.getSchema(schema3.name, schema3.version)))
+      assertResult(Some(schema))(Await.result(schemaService.getSchema(schema.name, schema.version)))
+      assertResult(Some(schema1))(Await.result(schemaService.getSchema(schema1.name, schema1.version)))
+      assertResult(Some(schema2))(Await.result(schemaService.getSchema(schema2.name, schema2.version)))
+      assertResult(Some(schema3))(Await.result(schemaService.getSchema(schema3.name, schema3.version)))
 
       assertResult(true)(Await.result(schemaService.deleteSchema(schema.name, schema.version)))
-      assertResult(null)(Await.result(schemaService.getSchema(schema.name, schema.version)))
-      assertResult(schema1)(Await.result(schemaService.getSchema(schema1.name, schema1.version)))
-      assertResult(schema2)(Await.result(schemaService.getSchema(schema2.name, schema2.version)))
-      assertResult(schema3)(Await.result(schemaService.getSchema(schema3.name, schema3.version)))
+      assertResult(None)(Await.result(schemaService.getSchema(schema.name, schema.version)))
+      assertResult(Some(schema1))(Await.result(schemaService.getSchema(schema1.name, schema1.version)))
+      assertResult(Some(schema2))(Await.result(schemaService.getSchema(schema2.name, schema2.version)))
+      assertResult(Some(schema3))(Await.result(schemaService.getSchema(schema3.name, schema3.version)))
 
       assertResult(true)(Await.result(schemaService.deleteSchema(schema3.name, schema3.version)))
-      assertResult(null)(Await.result(schemaService.getSchema(schema.name, schema.version)))
-      assertResult(schema1)(Await.result(schemaService.getSchema(schema1.name, schema1.version)))
-      assertResult(schema2)(Await.result(schemaService.getSchema(schema2.name, schema2.version)))
-      assertResult(null)(Await.result(schemaService.getSchema(schema3.name, schema3.version)))
+      assertResult(None)(Await.result(schemaService.getSchema(schema.name, schema.version)))
+      assertResult(Some(schema1))(Await.result(schemaService.getSchema(schema1.name, schema1.version)))
+      assertResult(Some(schema2))(Await.result(schemaService.getSchema(schema2.name, schema2.version)))
+      assertResult(None)(Await.result(schemaService.getSchema(schema3.name, schema3.version)))
 
       assertResult(true)(Await.result(schemaService.deleteSchemaName(name)))
       assertResult(true)(Await.result(schemaService.deleteSchemaName(name + 3)))
@@ -156,17 +155,21 @@ class SchemaServiceTest extends IntegrationTest {
       assertResult(true)(Await.result(schemaService.addSchema(schema2)))
       assertResult(true)(Await.result(schemaService.addSchema(schema3)))
 
-      assertResult(schema)(Await.result(schemaService.getSchema(schema.name, schema.version)))
-      assertResult(schema1)(Await.result(schemaService.getSchema(schema1.name, schema1.version)))
-      assertResult(schema2)(Await.result(schemaService.getSchema(schema2.name, schema2.version)))
-      assertResult(schema3)(Await.result(schemaService.getSchema(schema3.name, schema3.version)))
+      assertResult(Some(schema))(Await.result(schemaService.getSchema(schema.name, schema.version)))
+      assertResult(Some(schema1))(Await.result(schemaService.getSchema(schema1.name, schema1.version)))
+      assertResult(Some(schema2))(Await.result(schemaService.getSchema(schema2.name, schema2.version)))
+      assertResult(Some(schema3))(Await.result(schemaService.getSchema(schema3.name, schema3.version)))
 
       assertResult(true)(Await.result(schemaService.deleteAllSchema()))
 
-      assertResult(null)(Await.result(schemaService.getSchema(schema.name, schema.version)))
-      assertResult(null)(Await.result(schemaService.getSchema(schema1.name, schema1.version)))
-      assertResult(null)(Await.result(schemaService.getSchema(schema2.name, schema2.version)))
-      assertResult(null)(Await.result(schemaService.getSchema(schema3.name, schema3.version)))
+      assertResult(None)(Await.result(schemaService.getSchema(schema.name, schema.version)))
+      assertResult(None)(Await.result(schemaService.getSchema(schema1.name, schema1.version)))
+      assertResult(None)(Await.result(schemaService.getSchema(schema2.name, schema2.version)))
+      assertResult(None)(Await.result(schemaService.getSchema(schema3.name, schema3.version)))
+    }
+
+    "delete All" in {
+      assertResult(true)(Await.result(schemaService.deleteAllSchema()))
     }
   }
 }

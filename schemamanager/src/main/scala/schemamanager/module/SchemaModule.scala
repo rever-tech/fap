@@ -6,11 +6,10 @@ import schemamanager.service.{LevelDBSchemaService, SchemaService}
 import schemamanager.util.ZConfig
 
 /**
-  * Created by SangDang on 9/16/16.
-  */
+ * Created by SangDang on 9/16/16.
+ */
 object SchemaModule extends TwitterModule {
-
   @Singleton
   @Provides
-  def providesSchemaService(): SchemaService = new LevelDBSchemaService(ZConfig.getString("leveldb.dir"))
+  def providesSchemaService(): SchemaService = LevelDBSchemaService(ZConfig.getString("leveldb.dir"))
 }
