@@ -7,4 +7,15 @@ import com.twitter.util.FuturePool
  */
 object Implicits {
   implicit def futurePool = FuturePool.unboundedPool
+
+  implicit def T2SchemaData(tschemaData: TSchemaData) = SchemaData(tschemaData.nameToType)
+
+  implicit def SchemaData2T(schemaData: SchemaData) = TSchemaData(schemaData.nameToType)
+
+  implicit def Schema2T(schema: Schema) = TSchema(schema.name, schema.version, schema.schema)
+
+  implicit def T2Schema(tschema: TSchema) = Schema(tschema.name, tschema.version, tschema.schema)
+
+  implicit def SeqSchema2T(seqSchema: Seq[Schema]): Seq[TSchema] = seqSchema.map(f => Schema2T(f))
+
 }

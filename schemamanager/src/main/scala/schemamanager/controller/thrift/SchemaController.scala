@@ -6,7 +6,7 @@ import com.twitter.finatra.thrift.Controller
 import com.twitter.inject.Logging
 import schemamanager.service.TSchemaManager._
 import schemamanager.service.{SchemaService, TSchemaManager}
-
+import schemamanager.domain.Implicits._
 
 /**
  * Created by SangDang on 9/16/16.

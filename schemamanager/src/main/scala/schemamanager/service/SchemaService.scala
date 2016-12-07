@@ -2,10 +2,11 @@ package schemamanager.service
 
 import java.io.File
 
+import com.google.inject.{Inject, Singleton}
 import com.twitter.util.Future
 import org.fusesource.leveldbjni.JniDBFactory
 import org.iq80.leveldb.{CompressionType, DB, Options}
-import schemamanager.domain.{TSchema, TSchemaData}
+import schemamanager.domain.{Schema, SchemaData, TSchema}
 import schemamanager.util.{JsonUtils, ZConfig}
 import schemamanager.domain.Implicits._
 
@@ -14,7 +15,7 @@ import schemamanager.domain.Implicits._
  */
 trait SchemaService {
 
-  def addSchema(schema: TSchema): Future[Boolean]
+  def addSchema(schema: Schema): Future[Boolean]
 
   def getSchemas(name: String): Future[Seq[TSchema]]
 
@@ -31,14 +32,13 @@ trait SchemaService {
   def deleteAllSchema(): Future[Boolean]
 }
 
-class LevelDBSchemaService extends SchemaService {
+class LevelDBSchemaService @Inject()(levelDbDir: String) extends SchemaService {
 
   val options = new Options()
     .createIfMissing(true)
     .compressionType(CompressionType.NONE)
     .cacheSize(10 * 1024 * 1024)
-  val levelDbDir = new File(ZConfig.getString("leveldb.dir"))
-  val db: DB = JniDBFactory.factory.open(levelDbDir, options)
+  val db: DB = JniDBFactory.factory.open(new File(levelDbDir), options)
   val schemaKeys = getBytes("schemas_key")
   val schemaNameVersionsPrefix = "schema_versions"
   val schemaNameVersionPrefix = "schema_version"
@@ -50,7 +50,7 @@ class LevelDBSchemaService extends SchemaService {
     try {
       db.get(schemaKeys) match {
         case null => {
-          batch.put(schemaKeys, getBytes(JsonUtils.toJson(Set.empty[String])))
+          batch.put(schemaKeys, getBytes(JsonUtils.toJson[Set[String]](Set.empty)))
           db.write(batch)
         }
         case _ =>
@@ -60,19 +60,19 @@ class LevelDBSchemaService extends SchemaService {
     }
   }
 
-  override def addSchema(schema: TSchema): Future[Boolean] = futurePool {
+  override def addSchema(schema: Schema): Future[Boolean] = futurePool {
     var addOk = false
     val batch = db.createWriteBatch()
     try {
       val schemaNameVersionsKey = getBytes(s"${schemaNameVersionsPrefix}_${schema.name}")
-      var schemaNameVersionsValue: Set[Int] = db.get(schemaNameVersionsKey) match {
+      var schemaNameVersionsValue = db.get(schemaNameVersionsKey) match {
         case null => {
-          var schemaNames: Set[String] = JsonUtils.fromJson(getString(db.get(schemaKeys)))
+          var schemaNames = JsonUtils.fromJson[Set[String]](getString(db.get(schemaKeys)))
           schemaNames += schema.name
           batch.put(schemaKeys, getBytes(JsonUtils.toJson[Set[String]](schemaNames)))
-          Set.empty
+          Set.empty[Int]
         }
-        case x => JsonUtils.fromJson(getString(x))
+        case x => JsonUtils.fromJson[Set[Int]](getString(x))
       }
       schemaNameVersionsValue.contains(schema.version) match {
         case false => {
@@ -82,7 +82,7 @@ class LevelDBSchemaService extends SchemaService {
         case true =>
       }
       val schemaNameVersionKey = getBytes(s"${schemaNameVersionPrefix}_${schema.name}_${schema.version}")
-      batch.put(schemaNameVersionKey, getBytes(JsonUtils.toJson[TSchemaData](schema.schema)))
+      batch.put(schemaNameVersionKey, getBytes(JsonUtils.toJson[SchemaData](schema.schema)))
       db.write(batch)
       addOk = true
     } finally {
@@ -96,10 +96,10 @@ class LevelDBSchemaService extends SchemaService {
     db.get(schemaNameVersionsKey) match {
       case null => Seq.empty
       case x => {
-        val versions: Set[Int] = JsonUtils.fromJson(getString(x))
+        val versions = JsonUtils.fromJson[Set[Int]](getString(x))
         versions.map(version => {
           val schemaNameVersionKey = getBytes(s"${schemaNameVersionPrefix}_${name}_${version}")
-          TSchema(name, version, JsonUtils.fromJson[TSchemaData](getString(db.get(schemaNameVersionKey))))
+          Schema(name, version, JsonUtils.fromJson[SchemaData](getString(db.get(schemaNameVersionKey))))
         }).toSeq
       }
     }
@@ -107,11 +107,14 @@ class LevelDBSchemaService extends SchemaService {
 
   override def getSchema(name: String, version: Int): Future[TSchema] = futurePool {
     val schemaNameVersionKey = getBytes(s"${schemaNameVersionPrefix}_${name}_${version}")
-    TSchema(name, version, JsonUtils.fromJson[TSchemaData](getString(db.get(schemaNameVersionKey))))
+    db.get(schemaNameVersionKey) match {
+      case null => null
+      case x =>Schema(name, version, JsonUtils.fromJson[SchemaData](getString(x)))
+    }
   }
 
   override def getAllSchemaName(): Future[Seq[String]] = futurePool {
-    JsonUtils.fromJson(getString(db.get(schemaKeys)))
+    JsonUtils.fromJson[Seq[String]](getString(db.get(schemaKeys)))
   }
 
   override def exist(name: String): Future[Boolean] = futurePool {
@@ -182,7 +185,7 @@ class LevelDBSchemaService extends SchemaService {
         })
         batch.delete(schemaNameVersionsKey)
       })
-      batch.put(schemaKeys, getBytes(JsonUtils.toJson(Set.empty[String])))
+      batch.put(schemaKeys, getBytes(JsonUtils.toJson[Set[String]](Set.empty)))
 
       db.write(batch)
       deleteOk = true
