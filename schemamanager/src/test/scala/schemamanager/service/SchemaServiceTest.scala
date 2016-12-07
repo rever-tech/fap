@@ -13,7 +13,7 @@ import schemamanager.module.SchemaModuleTest
 class SchemaServiceTest extends IntegrationTest {
   override protected def injector: Injector = Injector(Guice.createInjector(SchemaModuleTest))
 
-  val schemaService = injector.instance[SchemaService]
+  val schemaService = injector.instance[SchemaService]("Service")
 
   "Schema Service Test" should {
     val name = "schema name test"
@@ -172,4 +172,5 @@ class SchemaServiceTest extends IntegrationTest {
       assertResult(true)(Await.result(schemaService.deleteAllSchema()))
     }
   }
+
 }

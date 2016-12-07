@@ -32,12 +32,20 @@ trait SchemaService {
   def deleteAllSchema(): Future[Boolean]
 }
 
+@Singleton
 case class LevelDBSchemaService @Inject()(levelDbDir: String) extends SchemaService {
   val options = new Options()
     .createIfMissing(true)
     .compressionType(CompressionType.NONE)
     .cacheSize(10 * 1024 * 1024)
-  val db: DB = JniDBFactory.factory.open(new File(levelDbDir), options)
+
+  val levelDBFile = new File(levelDbDir)
+  levelDBFile.exists() match {
+    case false => levelDBFile.mkdirs()
+    case _ =>
+  }
+
+  val db: DB = JniDBFactory.factory.open(levelDBFile, options)
   val schemaKeys = getBytes("schemas_key")
   val schemaNameVersionsPrefix = "schema_versions"
   val schemaNameVersionPrefix = "schema_version"
@@ -199,4 +207,3 @@ case class LevelDBSchemaService @Inject()(levelDbDir: String) extends SchemaServ
 
   private def getString(bytes: Array[Byte]) = new String(bytes, "UTF-8")
 }
-

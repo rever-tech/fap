@@ -184,3 +184,4 @@ gradle-app.setting
 # gradle/wrapper/gradle-wrapper.properties
 
 db/leveldb_test
+db/*

@@ -22,7 +22,7 @@ class LevelDBTest extends Test {
       JniDBFactory.pushMemoryPool(1024 * 512)
     }
 
-    val levelDbDir = new File("./db/leveldb_test")
+    val levelDbDir = new File("./db/leveldb_test_1")
     val db: DB = JniDBFactory.factory.open(levelDbDir, options)
     "put get delete" in {
       val key = "key"
