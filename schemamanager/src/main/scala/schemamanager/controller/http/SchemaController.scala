@@ -13,6 +13,6 @@ import com.twitter.finatra.http.Controller
 @Singleton
 class SchemaController @Inject()() extends Controller {
   post("/getAllSchema") { request: Request =>
-    response.ok()
+    response.ok
   }
 }

@@ -1,7 +1,13 @@
 package schemamanager.service
 
+import java.io.File
+
 import com.twitter.util.Future
-import schemamanager.domain.TSchema
+import org.fusesource.leveldbjni.JniDBFactory
+import org.iq80.leveldb.{CompressionType, DB, Options}
+import schemamanager.domain.{TSchema, TSchemaData}
+import schemamanager.util.{JsonUtils, ZConfig}
+import schemamanager.domain.Implicits._
 
 /**
  * Created by zkidkid on 12/6/16.
@@ -18,19 +24,176 @@ trait SchemaService {
 
   def exist(name: String): Future[Boolean]
 
+  def deleteSchemaName(name: String): Future[Boolean]
+
+  def deleteSchema(name: String, version: Int): Future[Boolean]
+
+  def deleteAllSchema(): Future[Boolean]
 }
 
 class LevelDBSchemaService extends SchemaService {
 
-  override def addSchema(schema: TSchema): Future[Boolean] = ???
+  val options = new Options()
+    .createIfMissing(true)
+    .compressionType(CompressionType.NONE)
+    .cacheSize(10 * 1024 * 1024)
+  val levelDbDir = new File(ZConfig.getString("leveldb.dir"))
+  val db: DB = JniDBFactory.factory.open(levelDbDir, options)
+  val schemaKeys = getBytes("schemas_key")
+  val schemaNameVersionsPrefix = "schema_versions"
+  val schemaNameVersionPrefix = "schema_version"
 
-  override def getSchemas(name: String): Future[Seq[TSchema]] = ???
+  initDB
 
-  override def getSchema(name: String, version: Int): Future[TSchema] = ???
+  private[this] def initDB = {
+    val batch = db.createWriteBatch()
+    try {
+      db.get(schemaKeys) match {
+        case null => {
+          batch.put(schemaKeys, getBytes(JsonUtils.toJson(Set.empty[String])))
+          db.write(batch)
+        }
+        case _ =>
+      }
+    } finally {
+      batch.close
+    }
+  }
 
-  override def getAllSchemaName(): Future[Seq[String]] = ???
+  override def addSchema(schema: TSchema): Future[Boolean] = futurePool {
+    var addOk = false
+    val batch = db.createWriteBatch()
+    try {
+      val schemaNameVersionsKey = getBytes(s"${schemaNameVersionsPrefix}_${schema.name}")
+      var schemaNameVersionsValue: Set[Int] = db.get(schemaNameVersionsKey) match {
+        case null => {
+          var schemaNames: Set[String] = JsonUtils.fromJson(getString(db.get(schemaKeys)))
+          schemaNames += schema.name
+          batch.put(schemaKeys, getBytes(JsonUtils.toJson[Set[String]](schemaNames)))
+          Set.empty
+        }
+        case x => JsonUtils.fromJson(getString(x))
+      }
+      schemaNameVersionsValue.contains(schema.version) match {
+        case false => {
+          schemaNameVersionsValue += schema.version
+          batch.put(schemaNameVersionsKey, getBytes(JsonUtils.toJson[Set[Int]](schemaNameVersionsValue)))
+        }
+        case true =>
+      }
+      val schemaNameVersionKey = getBytes(s"${schemaNameVersionPrefix}_${schema.name}_${schema.version}")
+      batch.put(schemaNameVersionKey, getBytes(JsonUtils.toJson[TSchemaData](schema.schema)))
+      db.write(batch)
+      addOk = true
+    } finally {
+      batch.close
+    }
+    addOk
+  }
 
-  override def exist(name: String): Future[Boolean] = ???
+  override def getSchemas(name: String): Future[Seq[TSchema]] = futurePool {
+    val schemaNameVersionsKey = getBytes(s"${schemaNameVersionsPrefix}_$name")
+    db.get(schemaNameVersionsKey) match {
+      case null => Seq.empty
+      case x => {
+        val versions: Set[Int] = JsonUtils.fromJson(getString(x))
+        versions.map(version => {
+          val schemaNameVersionKey = getBytes(s"${schemaNameVersionPrefix}_${name}_${version}")
+          TSchema(name, version, JsonUtils.fromJson[TSchemaData](getString(db.get(schemaNameVersionKey))))
+        }).toSeq
+      }
+    }
+  }
 
+  override def getSchema(name: String, version: Int): Future[TSchema] = futurePool {
+    val schemaNameVersionKey = getBytes(s"${schemaNameVersionPrefix}_${name}_${version}")
+    TSchema(name, version, JsonUtils.fromJson[TSchemaData](getString(db.get(schemaNameVersionKey))))
+  }
+
+  override def getAllSchemaName(): Future[Seq[String]] = futurePool {
+    JsonUtils.fromJson(getString(db.get(schemaKeys)))
+  }
+
+  override def exist(name: String): Future[Boolean] = futurePool {
+    val schemaNameVersionsKey = getBytes(s"${schemaNameVersionsPrefix}_${name}")
+    db.get(schemaNameVersionsKey) match {
+      case null => false
+      case x => true
+    }
+  }
+
+  override def deleteSchemaName(name: String): Future[Boolean] = futurePool {
+    var deleteOk = false
+    val batch = db.createWriteBatch()
+    try {
+      val schemaNameVersionsKey = getBytes(s"${schemaNameVersionsPrefix}_${name}")
+      db.get(schemaNameVersionsKey) match {
+        case null =>
+        case x => {
+          JsonUtils.fromJson[Set[Int]](getString(x)).foreach(version => {
+            val schemaNameVersionKey = getBytes(s"${schemaNameVersionPrefix}_${name}_${version}")
+            batch.delete(schemaNameVersionKey)
+          })
+          batch.delete(schemaNameVersionsKey)
+          batch.put(schemaKeys, getBytes(JsonUtils.toJson[Set[String]](JsonUtils.fromJson[Set[String]](getString(db.get(schemaKeys))) - name)))
+        }
+      }
+      db.write(batch)
+      deleteOk = true
+    } finally {
+      batch.close
+    }
+    deleteOk
+  }
+
+  override def deleteSchema(name: String, version: Int): Future[Boolean] = futurePool {
+    var deleteOk = false
+    val batch = db.createWriteBatch()
+    try {
+      val schemaNameVersionKey = getBytes(s"${schemaNameVersionPrefix}_${name}_${version}")
+      batch.delete(schemaNameVersionKey)
+      val schemaNameVersionsKey = getBytes(s"${schemaNameVersionsPrefix}_$name")
+      val versions = JsonUtils.fromJson[Set[Int]](getString(db.get(schemaNameVersionsKey))) - version
+      versions.size match {
+        case 0 => {
+          batch.delete(schemaNameVersionsKey)
+          batch.put(schemaKeys, getBytes(JsonUtils.toJson(JsonUtils.fromJson[Set[String]](getString(db.get(schemaKeys))) - name)))
+        }
+        case _ => batch.put(schemaNameVersionsKey, getBytes(JsonUtils.toJson[Set[Int]](versions)))
+      }
+
+      db.write(batch)
+      deleteOk = true
+    } finally {
+      batch.close()
+    }
+    deleteOk
+  }
+
+  override def deleteAllSchema(): Future[Boolean] = futurePool {
+    var deleteOk = false
+    val batch = db.createWriteBatch()
+    try {
+      JsonUtils.fromJson[Set[String]](getString(db.get(schemaKeys))).foreach(name => {
+        val schemaNameVersionsKey = getBytes(s"${schemaNameVersionsPrefix}_$name")
+        JsonUtils.fromJson[Set[Int]](getString(db.get(schemaNameVersionsKey))).foreach(version => {
+          val schemaNameVersionKey = getBytes(s"${schemaNameVersionPrefix}_${name}_${version}")
+          batch.delete(schemaNameVersionKey)
+        })
+        batch.delete(schemaNameVersionsKey)
+      })
+      batch.put(schemaKeys, getBytes(JsonUtils.toJson(Set.empty[String])))
+
+      db.write(batch)
+      deleteOk = true
+    } finally {
+      batch.close
+    }
+    deleteOk
+  }
+
+  private def getBytes(s: String) = s.getBytes("UTF-8")
+
+  private def getString(bytes: Array[Byte]) = new String(bytes, "UTF-8")
 }
 

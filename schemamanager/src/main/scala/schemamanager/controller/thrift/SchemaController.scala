@@ -4,7 +4,7 @@ import javax.inject.{Inject, Singleton}
 
 import com.twitter.finatra.thrift.Controller
 import com.twitter.inject.Logging
-import schemamanager.service.TSchemaManager.{AddSchema, Exist, GetAllSchemaName, GetSchema, GetSchemas}
+import schemamanager.service.TSchemaManager._
 import schemamanager.service.{SchemaService, TSchemaManager}
 
 
@@ -42,6 +42,24 @@ class SchemaController @Inject()(schemaService: SchemaService) extends Controlle
   override def exist = handle(Exist) {
     args: Exist.Args => {
       schemaService.exist(args.name)
+    }
+  }
+
+  override def deleteSchemaName = handle(DeleteSchemaName) {
+    args: DeleteSchemaName.Args => {
+      schemaService.deleteSchemaName(args.name)
+    }
+  }
+
+  override def deleteSchema = handle(DeleteSchema) {
+    args: DeleteSchema.Args => {
+      schemaService.deleteSchema(args.name, args.version)
+    }
+  }
+
+  override def deleteAllSchema = handle(DeleteAllSchema) {
+    args: DeleteAllSchema.Args => {
+      schemaService.deleteAllSchema()
     }
   }
 }

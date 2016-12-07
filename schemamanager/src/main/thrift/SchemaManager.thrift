@@ -9,5 +9,8 @@ service TSchemaManager {
     SchemaManagerDT.TSchema getSchema(1:string name,2:i32 version)
     list<string> getAllSchemaName()
     bool exist(1:string name)
+    bool deleteSchemaName(1: string name)
+    bool deleteSchema(1: string name, 2:i32 version)
+    bool deleteAllSchema()
 }
 
