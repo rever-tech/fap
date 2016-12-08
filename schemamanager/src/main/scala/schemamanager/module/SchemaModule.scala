@@ -16,7 +16,9 @@ object SchemaModule extends TwitterModule {
   @Singleton
   @Provides
   def providerLevelDBClient(): LevelDBClient = {
-    new LevelDBClient(ZConfig.getString("leveldb.dir.schemamanager"))
+    val levelDir = ZConfig.getString("leveldb.dir.schemamanager")
+    val cacheSizeInMb = ZConfig.getLong("leveldb.cache_size_in_mb")
+    new LevelDBClient(levelDir, cacheSizeInMb * 1024 * 1024)
   }
 
   @Singleton
