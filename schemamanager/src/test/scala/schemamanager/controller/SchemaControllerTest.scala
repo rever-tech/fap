@@ -1,21 +1,35 @@
 package schemamanager.controller
 
 import com.twitter.finatra.http.EmbeddedHttpServer
-import com.twitter.finatra.thrift.{EmbeddedThriftServer, ThriftClient}
+import com.twitter.finatra.thrift.ThriftClient
+import com.twitter.inject.TwitterModule
 import com.twitter.inject.server.FeatureTest
 import com.twitter.util.{Await, Future}
-import schemamanager.ServerTest
+import schemamanager.Server
+import schemamanager.client.LevelDBClient
 import schemamanager.domain.Implicits.{T2Schema, T2SchemaData}
 import schemamanager.domain.{Schema, TSchema, TSchemaData}
+import schemamanager.module.SchemaControllerModuleTest
 import schemamanager.service.TSchemaManager
 
 /**
  * @author sonpn
  */
+class ServerTest extends Server {
+  override val modules: Seq[TwitterModule] = Seq(SchemaControllerModuleTest)
+}
+
 class SchemaControllerTest extends FeatureTest {
   override protected val server = new EmbeddedHttpServer(twitterServer = new ServerTest) with ThriftClient
 
   var client: TSchemaManager[Future] = server.thriftClient[TSchemaManager[Future]](clientId = "thrift-test")
+
+  override def afterAll() = {
+    super.afterAll()
+    val levelDBClient = server.injector.instance[LevelDBClient]
+    levelDBClient.close
+    levelDBClient.destroy
+  }
 
   "thrift test" should {
 

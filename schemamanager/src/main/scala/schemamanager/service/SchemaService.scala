@@ -1,14 +1,12 @@
 package schemamanager.service
 
-import java.io.File
-
 import com.google.inject.{Inject, Singleton}
 import com.twitter.util.Future
-import org.fusesource.leveldbjni.JniDBFactory
-import org.iq80.leveldb.{CompressionType, DB, Options}
-import schemamanager.domain.{Schema, SchemaData, TSchema}
-import schemamanager.util.{JsonUtils, ZConfig}
+import org.iq80.leveldb.DB
+import schemamanager.client.LevelDBClient
 import schemamanager.domain.Implicits._
+import schemamanager.domain.{Schema, SchemaData, TSchema}
+import schemamanager.util.JsonUtils
 
 /**
  * Created by zkidkid on 12/6/16.
@@ -33,19 +31,8 @@ trait SchemaService {
 }
 
 @Singleton
-case class LevelDBSchemaService @Inject()(levelDbDir: String) extends SchemaService {
-  val options = new Options()
-    .createIfMissing(true)
-    .compressionType(CompressionType.NONE)
-    .cacheSize(10 * 1024 * 1024)
-
-  val levelDBFile = new File(levelDbDir)
-  levelDBFile.exists() match {
-    case false => levelDBFile.mkdirs()
-    case _ =>
-  }
-
-  val db: DB = JniDBFactory.factory.open(levelDBFile, options)
+class LevelDBSchemaService @Inject()(levelDBClient: LevelDBClient) extends SchemaService {
+  val db: DB = levelDBClient.getDB
   val schemaKeys = getBytes("schemas_key")
   val schemaNameVersionsPrefix = "schema_versions"
   val schemaNameVersionPrefix = "schema_version"
