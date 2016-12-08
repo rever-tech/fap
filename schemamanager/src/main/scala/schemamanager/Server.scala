@@ -6,6 +6,8 @@ import com.twitter.finatra.http.filters.CommonFilters
 import com.twitter.finatra.http.routing.HttpRouter
 import com.twitter.finatra.thrift.ThriftServer
 import com.twitter.finatra.thrift.routing.ThriftRouter
+import com.twitter.inject.TwitterModule
+import schemamanager.controller.http.PingController
 import schemamanager.controller.thrift.SchemaController
 import schemamanager.module.SchemaModule
 import schemamanager.util.ZConfig
@@ -23,11 +25,11 @@ class Server extends HttpServer with ThriftServer {
 
   override protected def disableAdminHttpServer: Boolean = ZConfig.getBoolean("server.admin.disable", true)
 
-  override val modules = Seq(SchemaModule)
+  override val modules: Seq[TwitterModule] = Seq(SchemaModule)
 
   override protected def configureHttp(router: HttpRouter): Unit = {
     router.filter[CommonFilters]
-
+      .add[PingController]
   }
 
   override protected def configureThrift(router: ThriftRouter): Unit = {
