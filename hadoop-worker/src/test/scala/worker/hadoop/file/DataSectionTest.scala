@@ -14,7 +14,13 @@ import util.TestUtil
   * Created by tiennt4 on 17/12/2016.
   */
 class DataSectionTest extends FunSuite with TestUtil {
-  val sectionTimestamp = 1481947200000l
+
+  val sectionTimestamp = {
+    val tmpCal = Calendar.getInstance()
+    tmpCal.set(2016, 11, 17, 11, 0, 0)
+    tmpCal.set(Calendar.MILLISECOND, 0)
+    tmpCal.getTimeInMillis
+  }
   private val sectionCreatedTime = System.currentTimeMillis()
   private val fileNamingConf = ConfigFactory.parseString(
     """

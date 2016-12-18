@@ -10,12 +10,12 @@ import worker.hadoop.util.ResourceControl
 trait TestUtil {
   def assertFileExist(path: Path): Unit = {
     println(path.toString)
-    assert(path.getFileSystem(new Configuration()).exists(path))
+    assert(path.getFileSystem(new Configuration()).exists(path), s"File ${path.toString} should exist")
   }
 
   def assertFileNotExist(path: Path): Unit = {
     println(path.toString)
-    assert(!path.getFileSystem(new Configuration()).exists(path))
+    assert(!path.getFileSystem(new Configuration()).exists(path), s"File ${path.toString} should not exist")
   }
 
   def getMd5HexOfFile(path: Path): String = {
