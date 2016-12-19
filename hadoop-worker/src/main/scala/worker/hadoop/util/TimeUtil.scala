@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit
 object TimeUtil {
 
   val timeUnits = Seq(
+    (1l, Calendar.MILLISECOND),
     (TimeUnit.SECONDS.toMillis(1), Calendar.SECOND),
     (TimeUnit.MINUTES.toMillis(1), Calendar.MINUTE),
     (TimeUnit.HOURS.toMillis(1), Calendar.HOUR_OF_DAY),

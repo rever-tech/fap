@@ -73,7 +73,7 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) {
     * @return section status
     */
   override def isSectionEnd(section: DataSection): Boolean = {
-    section.timestamp + interval >= System.currentTimeMillis()
+    section.timestamp + interval < System.currentTimeMillis()
   }
 
   final var previousSectionInfo: (String, Long) = ("", -1)

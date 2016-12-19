@@ -10,6 +10,7 @@ class TimeUtilTest extends FunSuite {
   test("roundLevelByInterval should return correct value with interval 1h") {
     assert(TimeUtil.roundTimeByInterval(1481601072000l, 3600000) == 1481598000000l)
     assert(TimeUtil.roundTimeByInterval(1481598000000l, 3600000) == 1481598000000l)
+    assert(TimeUtil.roundTimeByInterval(1482144178849l, 3600000) == 1482141600000l)
   }
   test("roundLevelByInterval should return correct value with interval 0.5h") {
     assert(TimeUtil.roundTimeByInterval(1481601072000l, 1800000) == 1481599800000l)
