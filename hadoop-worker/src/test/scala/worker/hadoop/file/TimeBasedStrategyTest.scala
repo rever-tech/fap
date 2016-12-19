@@ -22,7 +22,7 @@ class TimeBasedStrategyTest extends FunSuite {
     assert(strategy.isSectionEnd(section1))
     val section2 = DataSection("", "src/test/resources", "", System.currentTimeMillis(), System.currentTimeMillis(), null, null)
     assert(!strategy.isSectionEnd(section2))
-    val section3 = DataSection("", "src/test/resources", "", System.currentTimeMillis() - strategy.interval, System.currentTimeMillis(), null, null)
+    val section3 = DataSection("", "src/test/resources", "", System.currentTimeMillis() - strategy.interval - 1, System.currentTimeMillis(), null, null)
     assert(strategy.isSectionEnd(section3))
   }
 
