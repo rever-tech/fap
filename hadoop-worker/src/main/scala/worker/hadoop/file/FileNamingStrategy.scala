@@ -37,11 +37,11 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) {
   /**
     * Get file name that record belongs to
     *
+    * @todo benchmark performance
     * @param topic   topic name of record
     * @param version version of record
     * @param time    timestamp of record
     * @return the name that record belongs to
-    * @todo benchmark performance
     */
   override def getFileName(topic: String, version: String, time: Long): String = {
     val itvTime = TimeUtil.roundTimeByInterval(time, interval)

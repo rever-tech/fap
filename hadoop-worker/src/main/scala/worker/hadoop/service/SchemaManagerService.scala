@@ -1,18 +1,20 @@
 package worker.hadoop.service
 
-import com.google.inject.Inject
+import com.google.inject.Singleton
+import com.twitter.conversions.time._
 import com.twitter.util.{Await, Future}
+import parquet.schema.json.{JsonSchema, JsonType}
 import schemamanager.service.TSchemaManager
 import worker.hadoop.schema.SchemaInfo
-import com.twitter.conversions.time._
-import parquet.schema.json.{JsonSchema, JsonType}
 
 import scala.collection.mutable
 
 /**
   * Created by tiennt4 on 08/12/2016.
   */
-class SchemaManagerService @Inject()(schemaManagerClient: TSchemaManager[Future]) {
+
+@Singleton
+class SchemaManagerService(schemaManagerClient: TSchemaManager[Future]) {
 
   private final val schemas: mutable.Map[SchemaInfo, JsonSchema] = mutable.Map.empty
 

@@ -34,7 +34,7 @@
         <dependency>
             <groupId>net.cakesolutions</groupId>
             <artifactId>scala-kafka-client_2.11</artifactId>
-            <version>0.10.1.1</version>
+            <version>0.10.0.0</version>
         </dependency>
 
         <!-- Scala -->
@@ -133,7 +133,6 @@
             <type>test-jar</type>
             <version>${finatra.version}</version>
         </dependency>
-
 
         <dependency>
             <groupId>org.scalatest</groupId>

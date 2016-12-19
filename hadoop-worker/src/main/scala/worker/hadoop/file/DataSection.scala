@@ -2,6 +2,8 @@ package worker.hadoop.file
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.kafka.clients.consumer.ConsumerRecord
@@ -15,15 +17,13 @@ import scala.collection.mutable
 /**
   * Created by tiennt4 on 08/12/2016.
   */
-case class DataSection(identity: String,
-                       uri: String, topicName: String,
-                       timestamp: Long, createdTime: Long,
-                       fileNamingStrategy: FileNamingStrategy,
-                       metadata: Map[String, String] = Map.empty) {
+class DataSection(val identity: String,
+                  val uri: String, val topicName: String,
+                  val timestamp: Long, val createdTime: Long,
+                  val fileNamingStrategy: FileNamingStrategy,
+                  val metadata: Map[String, String] = Map.empty) {
 
   val sectionDir = new Path(uri, s"$identity-$topicName-${TimeUtil.formatDateToMinute(timestamp)}-${TimeUtil.formatDateToMinute(createdTime)}")
-
-  private final val METADATA_FILE_NAME = "_SUCCESS"
 
   val offsetInfo: mutable.Map[Int, Long] = mutable.Map.empty[Int, Long]
 
@@ -39,6 +39,10 @@ case class DataSection(identity: String,
         NameAndType("value", JsonString()),
         NameAndType("version", JsonInt())
       ))
+
+  private def setOffsetInfo(offsets: Map[Int, Long]): Unit = {
+    offsetInfo ++= offsets
+  }
 
   private[file] def getFullDataFileName(fileName: String): String = {
     val counter = fileNameCounter.get(fileName) match {
@@ -101,7 +105,7 @@ case class DataSection(identity: String,
     })
     files.clear()
     //Write offset info
-    val metaFile = new Path(sectionDir, METADATA_FILE_NAME)
+    val metaFile = new Path(sectionDir, DataSection.METADATA_FILE_NAME)
     ResourceControl.using(metaFile.getFileSystem(new Configuration()).create(metaFile)) {
       metaWriter =>
         metaWriter.writeChars(
@@ -112,9 +116,9 @@ case class DataSection(identity: String,
              |  "createdTime": ${createdTime},
              |  "identity": "${identity}",
              |  "uri": "${uri}",
-             |  "offset": {
+             |  "offset": [
              |    ${offsetInfo.map(partition => s"""{"partition": ${partition._1}, "offset": ${partition._2}}""").mkString(",\n")}
-             |  },
+             |  ],
              |  "metadata": {
              |    ${metadata.map(meta => s""""${meta._1}": "${meta._2}"""").mkString(",\n")}
              |  }
@@ -126,4 +130,33 @@ case class DataSection(identity: String,
   def clean(): Unit = {
     sectionDir.getFileSystem(new Configuration()).delete(sectionDir, true)
   }
+}
+
+object DataSection {
+  val METADATA_FILE_NAME = "_SUCCESS"
+  private val objectMapper: ObjectMapper = new ObjectMapper()
+    .registerModule(DefaultScalaModule)
+
+  def apply(json: String): DataSection = {
+    val data = objectMapper.readValue(json, classOf[Map[String, Any]])
+    val identity = data("identity").asInstanceOf[String]
+    val uri = data("uri").asInstanceOf[String]
+    val topicName = data("topic").asInstanceOf[String]
+    val timestamp = data("timestamp").asInstanceOf[Long]
+    val createdTime = data("createdTime").asInstanceOf[Long]
+    val offsets: Map[Int, Long] = data("offset").asInstanceOf[Seq[Map[String, Any]]]
+      .map(e => e("partition").asInstanceOf[Int] -> e("offset").asInstanceOf[Long]).toMap
+    val metadata = data("metadata").asInstanceOf[Map[String, String]]
+    val section = this (identity, uri, topicName, timestamp, createdTime, null, metadata)
+    section.setOffsetInfo(offsets)
+    //TODO: recover file name
+    section
+  }
+
+  def apply(identity: String,
+            uri: String, topicName: String,
+            timestamp: Long, createdTime: Long,
+            fileNamingStrategy: FileNamingStrategy,
+            metadata: Map[String, String] = Map.empty): DataSection =
+    new DataSection(identity, uri, topicName, timestamp, createdTime, fileNamingStrategy, metadata)
 }
