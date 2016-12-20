@@ -78,6 +78,16 @@ class FileForwardWorker(conf: Config) extends Thread with Logging {
     }
   }
 
+  def stopSafe(): Unit = {
+    isRunning.set(false)
+    //TODO: Wait all forwarder finished
+  }
+
+  override def start(): Unit = {
+    isRunning.set(true)
+    super.start()
+  }
+
   def forward(srcFSConf: FileSystemConfig, destFSConf: FileSystemConfig, dataSection: DataSection) {
     dataSection.ensureClose()
 
