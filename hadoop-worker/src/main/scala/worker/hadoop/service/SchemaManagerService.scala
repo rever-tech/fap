@@ -10,6 +10,7 @@ import worker.hadoop.schema.SchemaInfo
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.util.{Failure, Success, Try}
 
 /**
   * Created by tiennt4 on 08/12/2016.
@@ -25,7 +26,7 @@ class SchemaManagerService(schemaManagerClient: TSchemaManager[Future]) extends 
     if (!schemas.contains(schemaInfo)) {
       synchronized {
         if (!schemas.contains(schemaInfo)) {
-          retryOrNone(nRetry){
+          retryOrNone(nRetry) {
             getJsonSchemaFromSchemaManager(schemaInfo)
           } match {
             case Some(schema) =>
@@ -47,13 +48,14 @@ class SchemaManagerService(schemaManagerClient: TSchemaManager[Future]) extends 
 
   @tailrec
   private def retryOrNone[T](n: Int)(fn: => Option[T]): Option[T] = {
-    try {
-      return fn
-    } catch {
-      case e if n <= 0 =>
+    Try {
+      fn
+    } match {
+      case Success(x) => x
+      case _ if n > 1 => retryOrNone(n - 1)(fn)
+      case Failure(e) =>
         error("", e)
         None
     }
-    retryOrNone(n - 1)(fn)
   }
 }
