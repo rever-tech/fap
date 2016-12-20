@@ -44,6 +44,10 @@ class DataSection(val identity: String,
     offsetInfo ++= offsets
   }
 
+  private def addFinishedFiles(files: Seq[DataFile]): Unit = {
+    finishedFiles ++= files
+  }
+
   private[file] def getFullDataFileName(fileName: String): String = {
     val counter = fileNameCounter.get(fileName) match {
       case Some(count) => count.incrementAndGet()
@@ -108,7 +112,7 @@ class DataSection(val identity: String,
     val metaFile = new Path(sectionDir, DataSection.METADATA_FILE_NAME)
     ResourceControl.using(metaFile.getFileSystem(new Configuration()).create(metaFile)) {
       metaWriter =>
-        metaWriter.writeChars(
+        metaWriter.writeUTF(
           s"""
              |{
              |  "topic": "${topicName}",
@@ -121,7 +125,10 @@ class DataSection(val identity: String,
              |  ],
              |  "metadata": {
              |    ${metadata.map(meta => s""""${meta._1}": "${meta._2}"""").mkString(",\n")}
-             |  }
+             |  },
+             |  "finishedFiles" : [
+             |    ${finishedFiles.map(_.toJson()).mkString(",\n")}
+             |  ]
              |}
          """.stripMargin)
     }
@@ -149,7 +156,10 @@ object DataSection {
     val metadata = data("metadata").asInstanceOf[Map[String, String]]
     val section = this (identity, uri, topicName, timestamp, createdTime, null, metadata)
     section.setOffsetInfo(offsets)
-    //TODO: recover file name
+    val files = data("finishedFiles").asInstanceOf[Seq[Map[String, Any]]].map(e =>
+      DataFile(e("name").asInstanceOf[String], e("fullPath").asInstanceOf[String], null)
+    )
+    section.addFinishedFiles(files)
     section
   }
 

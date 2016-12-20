@@ -9,6 +9,7 @@ import com.typesafe.config.Config
   */
 abstract class NotifyService(config: Config) {
   def notify(address: String, message: String)
+  def notify(address: String, message: String, t: Throwable)
 }
 
 class LoggingNotifier(config: Config) extends NotifyService(config) {
@@ -16,5 +17,9 @@ class LoggingNotifier(config: Config) extends NotifyService(config) {
 
   override def notify(address: String, message: String): Unit = {
     logger.error(s"notify to: $address, message: $message")
+  }
+
+  override def notify(address: String, message: String, t: Throwable): Unit = {
+    logger.error(s"notify to: $address, message: $message", t)
   }
 }

@@ -13,4 +13,6 @@ case class DataFile(name: String, fullPath: String, writer: ParquetWriter[String
   def write(record: String): Unit = writer.write(record)
 
   def close(): Unit = writer.close()
+
+  def toJson(): String = s"""{"name": "$name", "fullPath": "$fullPath"}"""
 }

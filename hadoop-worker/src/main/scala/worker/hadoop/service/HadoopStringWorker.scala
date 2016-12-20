@@ -122,7 +122,7 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
 
     case Failure(t) =>
       //TODO: Implement notify when failure
-      notifier.notify("", "")
+      notifier.notify("", "", t)
       fileForwardWorker.commitFailure(dataSection.topicName)
   }
 
@@ -146,7 +146,8 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
         DataSection(json)
       }).sortBy(dataSection => dataSection.timestamp)
 
-      //TODO: schedule forward
+      //TODO: getAssigned
+      // schedule forward
     }
   }
 
