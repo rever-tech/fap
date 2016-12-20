@@ -2,11 +2,13 @@ package worker.hadoop.service
 
 import com.google.inject.Singleton
 import com.twitter.conversions.time._
+import com.twitter.inject.Logging
 import com.twitter.util.{Await, Future}
 import parquet.schema.json.{JsonSchema, JsonType}
 import schemamanager.service.TSchemaManager
 import worker.hadoop.schema.SchemaInfo
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 /**
@@ -14,18 +16,18 @@ import scala.collection.mutable
   */
 
 @Singleton
-class SchemaManagerService(schemaManagerClient: TSchemaManager[Future]) {
+class SchemaManagerService(schemaManagerClient: TSchemaManager[Future]) extends Logging {
 
+  private val nRetry: Int = 3
   private final val schemas: mutable.Map[SchemaInfo, JsonSchema] = mutable.Map.empty
 
   def getSchema(schemaInfo: SchemaInfo): Option[JsonSchema] = {
     if (!schemas.contains(schemaInfo)) {
       synchronized {
         if (!schemas.contains(schemaInfo)) {
-          Await.result(schemaManagerClient.getSchema(schemaInfo.name, schemaInfo.version)
-            .map(resp => resp.data.map(schema =>
-              JsonType.parseSchema(schema.name, schema.version, schema.schema.nameToType.toMap)))
-            , 5 seconds) match {
+          retryOrNone(nRetry){
+            getJsonSchemaFromSchemaManager(schemaInfo)
+          } match {
             case Some(schema) =>
               schemas.put(schemaInfo, schema)
             case None =>
@@ -34,5 +36,24 @@ class SchemaManagerService(schemaManagerClient: TSchemaManager[Future]) {
       }
     }
     schemas.get(schemaInfo)
+  }
+
+  private def getJsonSchemaFromSchemaManager(schemaInfo: SchemaInfo): Option[JsonSchema] = {
+    Await.result(schemaManagerClient.getSchema(schemaInfo.name, schemaInfo.version)
+      .map(resp => resp.data.map(schema =>
+        JsonType.parseSchema(schema.name, schema.version, schema.schema.nameToType.toMap)))
+      , 5 seconds)
+  }
+
+  @tailrec
+  private def retryOrNone[T](n: Int)(fn: => Option[T]): Option[T] = {
+    try {
+      return fn
+    } catch {
+      case e if n <= 0 =>
+        error("", e)
+        None
+    }
+    retryOrNone(n - 1)(fn)
   }
 }
