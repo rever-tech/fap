@@ -2,6 +2,7 @@ package collector
 
 
 import collector.controller.http.AnalyticsController
+import collector.controller.http.filter.CommonExceptionMapping
 import collector.module.AnalyticsModule
 import collector.util.ZConfig
 import com.twitter.finatra.http.HttpServer
@@ -24,5 +25,6 @@ class Server extends HttpServer {
   override protected def configureHttp(router: HttpRouter): Unit = {
     router.filter[CommonFilters]
       .add[AnalyticsController]
+      .exceptionMapper[CommonExceptionMapping]
   }
 }
