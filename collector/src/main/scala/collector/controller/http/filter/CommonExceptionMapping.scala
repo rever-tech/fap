@@ -21,6 +21,7 @@ class CommonExceptionMapping @Inject()(response: ResponseBuilder) extends Except
       }
       case e: InstanceNotFoundException => this.notFound(e)
       case e: InstanceAlreadyExistsException => this.conflict(e)
+      case e: GifNotFoundException => this.notFound(e)
       case _ => this.internalServerError(exception)
     }
   }

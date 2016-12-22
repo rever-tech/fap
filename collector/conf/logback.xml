@@ -74,7 +74,7 @@
   <!-- ===================================================== -->
 
   <!-- Root Config -->
-  <root level="${log_level:-WARN}">
+  <root level="${log_level:-DEBUG}">
     <appender-ref ref="STDOUT"/>
   </root>
 

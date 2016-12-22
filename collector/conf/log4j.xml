@@ -50,12 +50,8 @@
     </root>
 
     <logger name="org.apache.kafka">
-        <level value="INFO"/>
-        <appender-ref ref="kafka_log"/>
-    </logger>
-    <logger name="worker.hadoop">
         <level value="DEBUG"/>
-        <appender-ref ref="hadoop-worker"/>
+        <appender-ref ref="kafka_log"/>
     </logger>
 
 </log4j:configuration>

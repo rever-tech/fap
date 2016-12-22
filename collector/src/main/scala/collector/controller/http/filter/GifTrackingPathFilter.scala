@@ -1,7 +1,5 @@
 package collector.controller.http.filter
 
-import javax.management.InstanceNotFoundException
-
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import com.twitter.finagle.http.{Request, Response}
@@ -17,6 +15,8 @@ class GifTrackingPathFilter @Inject()(@Named("validGifName") validGifName: Set[S
   override def apply(request: Request, service: Service[Request, Response]): Future[Response] = {
     if (validGifName.contains(request.params("*")) && request.params("*").endsWith(".gif"))
       service.apply(request)
-    else Future.exception(new InstanceNotFoundException())
+    else Future.exception(new GifNotFoundException)
   }
 }
+
+class GifNotFoundException extends Exception

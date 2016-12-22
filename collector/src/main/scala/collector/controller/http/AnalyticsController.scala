@@ -17,12 +17,29 @@ import com.twitter.finatra.http.Controller
   */
 class AnalyticsController @Inject()(service: AnalyticsService) extends Controller {
 
-  private final val gifNamePattern = "^([\\w-]+)_v(\\d+).gif".r
+  private final val gifNamePatternWithVersion = "^([\\w-]+)_v(\\d+).gif".r
+  private final val gifNamePatternWithoutVersion = "^([\\w-]+).gif".r
 
   post("/analytic", name = "Analytic") {
     request: AnalyticRequest => {
       service.process(request)
       response.ok()
+    }
+  }
+
+  filter[GifTrackingPathFilter].get("/__:*", name = "GIF Analytic") {
+    request: Request => {
+      request.params("*") match {
+        case gifNamePatternWithVersion(name, version) =>
+          service.process(AnalyticRequest(name, version.toInt, request.params - "*"))
+          response.ok.contentType(MediaType.Gif).body(imgInByte)
+
+        case gifNamePatternWithoutVersion(name) =>
+          service.process(AnalyticRequest(name, 0, request.params - "*"))
+          response.ok.contentType(MediaType.Gif).body(imgInByte)
+
+        case _ => response.notFound
+      }
     }
   }
 
@@ -38,13 +55,4 @@ class AnalyticsController @Inject()(service: AnalyticsService) extends Controlle
     baos.close()
     tmp
   }
-
-  filter[GifTrackingPathFilter].get("/__:*", name = "GIF Analytic") {
-    request: Request => {
-      val gifName = request.params("*")
-      service.process(AnalyticRequest("utm", 1, request.params - "*"))
-      response.ok.contentType(MediaType.Gif).body(imgInByte)
-    }
-  }
-
 }

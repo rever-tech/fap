@@ -33,7 +33,7 @@ object AnalyticsModule extends TwitterModule {
   @Provides
   @Named("validGifName")
   def validGifName(): Set[String] = {
-    ZConfig.getStringList("analytic.gif.valid_names").toSet
+    ZConfig.getStringList("analytic.gif_names").toSet
   }
 }
 
