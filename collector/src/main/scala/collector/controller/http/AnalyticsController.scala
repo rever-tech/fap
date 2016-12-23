@@ -3,6 +3,7 @@ package collector.controller.http
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.util.Base64
 import javax.imageio.ImageIO
 import javax.inject.Inject
 
@@ -17,9 +18,6 @@ import com.twitter.finatra.http.Controller
   */
 class AnalyticsController @Inject()(service: AnalyticsService) extends Controller {
 
-  private final val gifNamePatternWithVersion = "^([\\w-]+)_v(\\d+).gif".r
-  private final val gifNamePatternWithoutVersion = "^([\\w-]+).gif".r
-
   post("/analytic", name = "Analytic") {
     request: AnalyticRequest => {
       service.process(request)
@@ -27,6 +25,10 @@ class AnalyticsController @Inject()(service: AnalyticsService) extends Controlle
     }
   }
 
+
+
+  private final val gifNamePatternWithVersion = "^([\\w-]+)_v(\\d+).gif".r
+  private final val gifNamePatternWithoutVersion = "^([\\w-]+).gif".r
   filter[GifTrackingPathFilter].get("/__:*", name = "GIF Analytic") {
     request: Request => {
       request.params("*") match {

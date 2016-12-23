@@ -1,8 +1,8 @@
 package collector
 
 
-import collector.controller.http.AnalyticsController
-import collector.controller.http.filter.CommonExceptionMapping
+import collector.controller.http.{AnalyticsController, MixPanelAnalyticsController}
+import collector.controller.http.filter.{CORSFilter, CommonExceptionMapping}
 import collector.module.AnalyticsModule
 import collector.util.ZConfig
 import com.twitter.finatra.http.HttpServer
@@ -10,8 +10,8 @@ import com.twitter.finatra.http.filters.CommonFilters
 import com.twitter.finatra.http.routing.HttpRouter
 
 /**
- * Created by SangDang on 9/8/
- **/
+  * Created by SangDang on 9/8/
+  **/
 object MainApp extends Server
 
 class Server extends HttpServer {
@@ -23,8 +23,10 @@ class Server extends HttpServer {
   override val modules = Seq(AnalyticsModule)
 
   override protected def configureHttp(router: HttpRouter): Unit = {
-    router.filter[CommonFilters]
+    router.filter[CORSFilter](beforeRouting = true)
+      .filter[CommonFilters]
       .add[AnalyticsController]
+      .add[MixPanelAnalyticsController]
       .exceptionMapper[CommonExceptionMapping]
   }
 }
