@@ -137,6 +137,10 @@ class DataSection(val identity: String,
   def clean(): Unit = {
     sectionDir.getFileSystem(new Configuration()).delete(sectionDir, true)
   }
+
+  override def toString: String = {
+    s"""{"sectionDir": "${sectionDir.toString}", "topicName": "$topicName"}"""
+  }
 }
 
 object DataSection {

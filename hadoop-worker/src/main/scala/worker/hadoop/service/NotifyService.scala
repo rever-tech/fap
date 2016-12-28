@@ -1,8 +1,7 @@
 package worker.hadoop.service
 
-import com.twitter.logging
-import com.twitter.logging.Logger
 import com.typesafe.config.Config
+import org.slf4j.LoggerFactory
 
 /**
   * Created by tiennt4 on 09/12/2016.
@@ -13,7 +12,10 @@ abstract class NotifyService(config: Config) {
 }
 
 class LoggingNotifier(config: Config) extends NotifyService(config) {
-  private final val logger: Logger = logging.Logger.get(config.getString("file_name"))
+  private final val logger = LoggerFactory.getLogger(config.getString("logger_name"))
+
+  //Testing
+  logger.error("======== test =========")
 
   override def notify(address: String, message: String): Unit = {
     logger.error(s"notify to: $address, message: $message")

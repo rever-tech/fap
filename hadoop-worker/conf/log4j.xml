@@ -32,6 +32,17 @@
         </layout>
     </appender>
 
+    <appender name="notify_message" class="org.apache.log4j.RollingFileAppender">
+        <param name="append" value="false" />
+        <param name="maxFileSize" value="10MB" />
+        <param name="maxBackupIndex" value="10" />
+        <param name="file" value="./logs/notify_message.log" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern"
+                   value="%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n" />
+        </layout>
+    </appender>
+
     <appender name="hadoop-worker" class="org.apache.log4j.RollingFileAppender">
         <param name="append" value="false" />
         <param name="maxFileSize" value="10MB" />
@@ -54,8 +65,12 @@
         <appender-ref ref="kafka_log"/>
     </logger>
     <logger name="worker.hadoop">
-        <level value="DEBUG"/>
+        <level value="INFO"/>
         <appender-ref ref="hadoop-worker"/>
+    </logger>
+    <logger name="notify_message">
+        <level value="INFO"/>
+        <appender-ref ref="notify_message"/>
     </logger>
 
 </log4j:configuration>

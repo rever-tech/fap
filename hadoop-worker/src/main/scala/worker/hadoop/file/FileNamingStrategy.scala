@@ -76,7 +76,7 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) {
     section.timestamp + interval < System.currentTimeMillis()
   }
 
-  final var previousSectionInfo: (String, Long) = ("", -1)
+//  final val previousSectionInfo: TrieMap[String, (String, Long)] = TrieMap()
 
   /**
     * Return name and timestamp of section
@@ -86,10 +86,14 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) {
     * @return pair of section name and timestamp
     */
   override def getSectionInfo(topic: String, time: Long): (String, Long) = {
-    if (!(time < previousSectionInfo._2 + interval && previousSectionInfo._2 <= time)) {
-      val itvTime = TimeUtil.roundTimeByInterval(time, interval)
-      previousSectionInfo = (s"$topic-${TimeUtil.formatDateToMinute(itvTime)}", itvTime)
-    }
-    previousSectionInfo
+//    if(previousSectionInfo.containsKey(topic))
+//    if (!(time < previousSectionInfo._2 + interval && previousSectionInfo._2 <= time)) {
+//      val itvTime = TimeUtil.roundTimeByInterval(time, interval)
+//      previousSectionInfo = (s"$topic-${TimeUtil.formatDateToMinute(itvTime)}", itvTime)
+//    }
+//    previousSectionInfo
+
+    val itvTime = TimeUtil.roundTimeByInterval(time, interval)
+    (s"$topic-${TimeUtil.formatDateToMinute(itvTime)}", itvTime)
   }
 }

@@ -51,6 +51,9 @@ class FileForwardWorker(conf: Config) extends Thread with Logging {
   }
 
   def schedule(t: DataSection)(f: Try[Unit] => Unit): Unit = {
+    infoResult("[FileForward] schedule forward DataSection: %s") {
+      t.toString
+    }
     if (!topicAndFiles.contains(t.topicName)) {
       synchronized {
         if (!topicAndFiles.contains(t.topicName)) {
@@ -68,9 +71,13 @@ class FileForwardWorker(conf: Config) extends Thread with Logging {
     while (isRunning.get()) {
       topicAndFiles.foreach(e => {
         e._2.getHead match {
-          case Some(file) => Future {
-            forward(srcFSConf, destFSConf, file._1)
-          }.onComplete(file._2)
+          case Some(file) =>
+            infoResult("[FileForward] start forward %s") {
+              file._1.toString
+            }
+            Future {
+              forward(srcFSConf, destFSConf, file._1)
+            }.onComplete(file._2)
           case None =>
         }
       })

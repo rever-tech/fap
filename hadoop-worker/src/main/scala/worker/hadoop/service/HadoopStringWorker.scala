@@ -78,14 +78,14 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
       var startTimestamp: Long = System.currentTimeMillis()
       var sleepTime: Long = checkingInterval
       while (isRunning.get()) {
-        debug("[SectionChecker] running section checker")
+        info("[SectionChecker] running section checker")
         startTimestamp = System.currentTimeMillis()
         val finishedSections = dataSections.filter(section => fileNaming.isSectionEnd(section._2))
         try {
           dataSectionsLock.lock()
           finishedSections.foreach(section => {
             val dataSection = section._2
-            debugResult("[SectionChecker] schedule forward data section: %s") {
+            infoResult("[SectionChecker] schedule forward data section: %s") {
               dataSection.sectionDir.toUri.toString
             }
             fileForwardWorker.schedule(dataSection)(forwardCallback(dataSection))
@@ -97,7 +97,7 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
 
         sleepTime = checkingInterval - (System.currentTimeMillis() - startTimestamp)
         //Do sleep
-        debugResult("[SectionChecker] will be sleep %s mills") {
+        infoResult("[SectionChecker] will be sleep %s mills") {
           sleepTime
         }
         if (sleepTime > 0)
@@ -160,8 +160,11 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
     })
   }
 
-  private def createDataSection(topicName: String, sectionName: String, sectionTimestamp: Long): DataSection =
-    DataSection(workerName, workDir, topicName, sectionTimestamp, System.currentTimeMillis(), fileNaming)
+  private def createDataSection(topicName: String, sectionName: String, sectionTimestamp: Long): DataSection = {
+    infoResult("[Hadoop Worker] Create DataSection: %s") {
+      DataSection(workerName, workDir, topicName, sectionTimestamp, System.currentTimeMillis(), fileNaming)
+    }
+  }
 
 
   /**
