@@ -1,6 +1,5 @@
 package worker.hadoop.service
 
-
 import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock

@@ -1,18 +1,17 @@
-package worker.hadoop.service
+package useractivities.service
 
 import java.util.concurrent.atomic.AtomicBoolean
 
 import cakesolutions.kafka.KafkaConsumer
 import cakesolutions.kafka.KafkaConsumer.Conf
 import com.typesafe.config.ConfigFactory
-import org.apache.kafka.clients.consumer.{ConsumerRecord, OffsetAndMetadata}
-import org.apache.kafka.common.TopicPartition
+import org.apache.kafka.clients.consumer.ConsumerRecord
 
 import scala.collection.JavaConversions._
 
 /**
-  * Created by zkidkid on 12/2/16.
-  */
+ * Created by zkidkid on 12/2/16.
+ */
 
 trait Worker[T] {
 
@@ -48,25 +47,12 @@ abstract class AbstractKafkaWorker[K, V](config: String) extends KafkaWorker[K, 
 
   val KafkaPollTimeInMs = 100
 
-  def commitOffset(topic: String, partition: Int, offset: Long): Unit =
-    kafkaConsumer.commitSync(
-      Map(new TopicPartition(topic, partition) -> new OffsetAndMetadata(offset)))
-
-  def commitOffsets(offsets: Map[String, Map[Int, Long]]): Unit =
-    kafkaConsumer.commitSync(offsets.flatMap(topic => topic._2.map(partition =>
-      new TopicPartition(topic._1, partition._1) -> new OffsetAndMetadata(partition._2))))
-
-  def commitOffsets(topic: String, offsets: Map[Int, Long]): Unit =
-    kafkaConsumer.commitSync(offsets.map(offset =>
-      new TopicPartition(topic, offset._1) -> new OffsetAndMetadata(offset._2)))
-
-
   val flag = new AtomicBoolean(false)
 
-  val running = new AtomicBoolean(false)
+  val _isRunning = new AtomicBoolean(false)
 
   def start(): Unit = {
-    running.set(true)
+    _isRunning.set(true)
     beforeStart()
     while (flag.get() == false) {
       val kafkaRecords = kafkaConsumer.poll(KafkaPollTimeInMs)
@@ -75,11 +61,14 @@ abstract class AbstractKafkaWorker[K, V](config: String) extends KafkaWorker[K, 
       }
     }
     afterStop()
-    running.set(false)
+    _isRunning.set(false)
+
   }
 
   def stop(): Unit = flag.set(true)
 
-  override def isRunning(): Boolean = running.get()
+
+  override def isRunning(): Boolean = _isRunning.get()
+
 
 }
