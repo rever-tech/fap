@@ -2,7 +2,7 @@ package worker.hadoop.util
 
 import java.io.{File, PrintStream}
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.collection.JavaConversions._
 
@@ -54,6 +54,8 @@ object ZConfig {
   def getStringList(s: String, default: List[String]): List[String] = if (hasPath(s)) getStringList(s) else default
 
   def getIsNull(s: String): Boolean = config.getIsNull(s)
+
+  def getConfig(s: String): Config = config.getConfig(s)
 
   def hasPath(s: String): Boolean = config.hasPath(s)
 

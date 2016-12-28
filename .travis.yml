@@ -1,0 +1,14 @@
+sudo: required
+
+language: scala
+
+scala:
+  - 2.11.8
+
+jdk:
+  - oraclejdk8
+
+env:
+  - HADOOP_WORKER=hadoop-worker
+
+script: cd $HADOOP_WORKER && mvn clean verify
