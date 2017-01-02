@@ -2,6 +2,7 @@ package worker.hadoop.file
 
 import java.util.Calendar
 
+import com.twitter.inject.Logging
 import com.typesafe.config.Config
 import org.apache.commons.lang.text.StrSubstitutor
 import worker.hadoop.util.TimeUtil
@@ -32,7 +33,7 @@ abstract class FileNamingStrategy(conf: Config) {
   def getSectionInfo(topic: String, time: Long): (String, Long)
 }
 
-class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) {
+class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) with Logging {
 
   /**
     * Get file name that record belongs to
@@ -47,16 +48,18 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) {
     val itvTime = TimeUtil.roundTimeByInterval(time, interval)
     val cal = Calendar.getInstance()
     cal.setTimeInMillis(itvTime)
-    StrSubstitutor.replace(namePattern, Map[String, Any](
-      "yyyy" -> cal.get(Calendar.YEAR),
-      "dd" -> cal.get(Calendar.DAY_OF_MONTH),
-      "MM" -> cal.get(Calendar.MONTH),
-      "HH" -> cal.get(Calendar.HOUR_OF_DAY),
-      "mm" -> cal.get(Calendar.MINUTE),
-      "s" -> cal.get(Calendar.SECOND),
-      "version" -> version,
-      "topic" -> topic
-    ))
+    debugResult("Get File Name: %s") {
+      StrSubstitutor.replace(namePattern, Map[String, Any](
+        "yyyy" -> cal.get(Calendar.YEAR),
+        "dd" -> cal.get(Calendar.DAY_OF_MONTH),
+        "MM" -> cal.get(Calendar.MONTH),
+        "HH" -> cal.get(Calendar.HOUR_OF_DAY),
+        "mm" -> cal.get(Calendar.MINUTE),
+        "s" -> cal.get(Calendar.SECOND),
+        "version" -> version,
+        "topic" -> topic
+      ))
+    }
   }
 
   /**
@@ -73,10 +76,14 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) {
     * @return section status
     */
   override def isSectionEnd(section: DataSection): Boolean = {
-    section.timestamp + interval < System.currentTimeMillis()
+    debugResult("Is Section End? Section name: " + section.topicName
+      + ", Section time: " + section.timestamp
+      + ", Interval: " + interval + ", result: %s") {
+      section.timestamp + interval < System.currentTimeMillis()
+    }
   }
 
-//  final val previousSectionInfo: TrieMap[String, (String, Long)] = TrieMap()
+  //  final val previousSectionInfo: TrieMap[String, (String, Long)] = TrieMap()
 
   /**
     * Return name and timestamp of section
@@ -86,14 +93,16 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) {
     * @return pair of section name and timestamp
     */
   override def getSectionInfo(topic: String, time: Long): (String, Long) = {
-//    if(previousSectionInfo.containsKey(topic))
-//    if (!(time < previousSectionInfo._2 + interval && previousSectionInfo._2 <= time)) {
-//      val itvTime = TimeUtil.roundTimeByInterval(time, interval)
-//      previousSectionInfo = (s"$topic-${TimeUtil.formatDateToMinute(itvTime)}", itvTime)
-//    }
-//    previousSectionInfo
+    //    if(previousSectionInfo.containsKey(topic))
+    //    if (!(time < previousSectionInfo._2 + interval && previousSectionInfo._2 <= time)) {
+    //      val itvTime = TimeUtil.roundTimeByInterval(time, interval)
+    //      previousSectionInfo = (s"$topic-${TimeUtil.formatDateToMinute(itvTime)}", itvTime)
+    //    }
+    //    previousSectionInfo
 
-    val itvTime = TimeUtil.roundTimeByInterval(time, interval)
-    (s"$topic-${TimeUtil.formatDateToMinute(itvTime)}", itvTime)
+    debugResult("get Section info: %s") {
+      val itvTime = TimeUtil.roundTimeByInterval(time, interval)
+      (s"$topic-${TimeUtil.formatDateToMinute(itvTime)}", itvTime)
+    }
   }
 }
