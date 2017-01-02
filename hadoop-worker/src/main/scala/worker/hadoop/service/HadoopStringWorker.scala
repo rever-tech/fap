@@ -1,6 +1,5 @@
 package worker.hadoop.service
 
-import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 
@@ -135,20 +134,26 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
     //Start section checker
     sectionChecker.start()
 
-    val workPath = new Path(workDir)
-    val fs = workPath.getFileSystem(new Configuration(false))
-    if (fs.exists(workPath)) {
-      val sections = fs.listStatus(workPath, new PathFilter {
-        override def accept(path: Path): Boolean = fs.exists(new Path(path, DataSection.METADATA_FILE_NAME))
-      }).map(section => {
-        val json = ResourceControl.using(fs.open(new Path(section.getPath, DataSection.METADATA_FILE_NAME))) {
-          reader => IOUtils.toString(reader, Charsets.toCharset(Charset.defaultCharset));
-        }
-        DataSection(json)
-      }).sortBy(dataSection => dataSection.timestamp)
+    try {
+      val workPath = new Path(workDir)
+      val fs = workPath.getFileSystem(new Configuration(false))
+      if (fs.exists(workPath)) {
+        val sections = fs.listStatus(workPath, new PathFilter {
+          override def accept(path: Path): Boolean = fs.exists(new Path(path, DataSection.METADATA_FILE_NAME))
+        }).map(section => {
+          val json = ResourceControl.using(fs.open(new Path(section.getPath, DataSection.METADATA_FILE_NAME))) {
+            reader => IOUtils.toString(reader, Charsets.UTF_8);
+          }
+          DataSection(json)
+        }).sortBy(dataSection => dataSection.timestamp)
 
-      //TODO: getAssigned
-      // schedule forward
+        info(s"Found old data: \n${sections.map(section => section.getMetaString).mkString("\n")}")
+
+        //TODO: getAssigned
+        // schedule forward
+      }
+    } catch {
+      case ex: Throwable => error("Cannot recover old data.", ex)
     }
   }
 
@@ -185,20 +190,20 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
         dataSections.put(sectionInfo._1, createDataSection(record.topic(), sectionInfo._1, sectionInfo._2))
       }
       dataSections(sectionInfo._1).write(schema, record)
-    }finally {
+    } finally {
       dataSectionsLock.unlock()
     }
-//    if (!dataSections.contains(sectionInfo._1)) {
-//      //Create section
-//      try {
-//        dataSectionsLock.lock()
-//        if (!dataSections.contains(sectionInfo._1)) {
-//          dataSections.put(sectionInfo._1, createDataSection(record.topic(), sectionInfo._1, sectionInfo._2))
-//        }
-//      } finally {
-//        dataSectionsLock.unlock()
-//      }
-//    }
-//    dataSections(sectionInfo._1).write(schema, record)
+    //    if (!dataSections.contains(sectionInfo._1)) {
+    //      //Create section
+    //      try {
+    //        dataSectionsLock.lock()
+    //        if (!dataSections.contains(sectionInfo._1)) {
+    //          dataSections.put(sectionInfo._1, createDataSection(record.topic(), sectionInfo._1, sectionInfo._2))
+    //        }
+    //      } finally {
+    //        dataSectionsLock.unlock()
+    //      }
+    //    }
+    //    dataSections(sectionInfo._1).write(schema, record)
   }
 }

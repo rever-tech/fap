@@ -112,31 +112,34 @@ class DataSection(val identity: String,
     val metaFile = new Path(sectionDir, DataSection.METADATA_FILE_NAME)
     ResourceControl.using(metaFile.getFileSystem(new Configuration()).create(metaFile)) {
       metaWriter =>
-        metaWriter.writeUTF(
-          s"""
-             |{
-             |  "topic": "${topicName}",
-             |  "timestamp": ${timestamp},
-             |  "createdTime": ${createdTime},
-             |  "identity": "${identity}",
-             |  "uri": "${uri}",
-             |  "offset": [
-             |    ${offsetInfo.map(partition => s"""{"partition": ${partition._1}, "offset": ${partition._2}}""").mkString(",\n")}
-             |  ],
-             |  "metadata": {
-             |    ${metadata.map(meta => s""""${meta._1}": "${meta._2}"""").mkString(",\n")}
-             |  },
-             |  "finishedFiles" : [
-             |    ${finishedFiles.map(_.toJson()).mkString(",\n")}
-             |  ]
-             |}
-         """.stripMargin)
+        metaWriter.writeUTF(getMetaString)
     }
   }
 
   def clean(): Unit = {
     sectionDir.getFileSystem(new Configuration()).delete(sectionDir, true)
   }
+
+  def getMetaString: String =
+    s"""
+       |{
+       |  "topic": "${topicName}",
+       |  "timestamp": ${timestamp},
+       |  "createdTime": ${createdTime},
+       |  "identity": "${identity}",
+       |  "uri": "${uri}",
+       |  "offset": [
+       |    ${offsetInfo.map(partition => s"""{"partition": ${partition._1}, "offset": ${partition._2}}""").mkString(",\n")}
+       |  ],
+       |  "metadata": {
+       |    ${metadata.map(meta => s""""${meta._1}": "${meta._2}"""").mkString(",\n")}
+       |  },
+       |  "finishedFiles" : [
+       |    ${finishedFiles.map(_.toJson()).mkString(",\n")}
+       |  ]
+       |}
+         """.stripMargin
+
 
   override def toString: String = {
     s"""{"sectionDir": "${sectionDir.toString}", "topicName": "$topicName"}"""
