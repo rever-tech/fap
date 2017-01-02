@@ -32,6 +32,17 @@
         </layout>
     </appender>
 
+    <appender name="time_base_file_naming" class="org.apache.log4j.RollingFileAppender">
+        <param name="append" value="false" />
+        <param name="maxFileSize" value="10MB" />
+        <param name="maxBackupIndex" value="10" />
+        <param name="file" value="./logs/time_base_file_naming.log" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern"
+                   value="%d{yyyy-MM-dd HH:mm:ss} %-5p %L - %m%n" />
+        </layout>
+    </appender>
+
     <appender name="notify_message" class="org.apache.log4j.RollingFileAppender">
         <param name="append" value="false" />
         <param name="maxFileSize" value="10MB" />
@@ -71,6 +82,11 @@
     <logger name="notify_message">
         <level value="INFO"/>
         <appender-ref ref="notify_message"/>
+    </logger>
+
+    <logger name="worker.hadoop.file.TimeBasedStrategy">
+        <level value="DEBUG"/>
+        <appender-ref ref=""/>
     </logger>
 
 </log4j:configuration>
