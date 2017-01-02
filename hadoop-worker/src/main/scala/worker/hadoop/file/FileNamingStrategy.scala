@@ -1,6 +1,7 @@
 package worker.hadoop.file
 
 import java.util.Calendar
+import java.util.concurrent.TimeUnit
 
 import com.twitter.inject.Logging
 import com.typesafe.config.Config
@@ -8,6 +9,7 @@ import org.apache.commons.lang.text.StrSubstitutor
 import worker.hadoop.util.TimeUtil
 
 import scala.collection.JavaConversions._
+import scala.concurrent.duration.Duration
 
 /**
   * Created by tiennt4 on 08/12/2016.
@@ -34,6 +36,10 @@ abstract class FileNamingStrategy(conf: Config) {
 }
 
 class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) with Logging {
+
+  info("===== TimeBasedStrategyFileNaming =====")
+  info(s" Interval: ${Duration(interval, TimeUnit.MILLISECONDS).toMinutes}")
+  info(s" Name Pattern: ${namePattern}")
 
   /**
     * Get file name that record belongs to
