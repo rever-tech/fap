@@ -52,7 +52,7 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) with Logg
       StrSubstitutor.replace(namePattern, Map[String, Any](
         "yyyy" -> cal.get(Calendar.YEAR),
         "dd" -> cal.get(Calendar.DAY_OF_MONTH),
-        "MM" -> cal.get(Calendar.MONTH),
+        "MM" -> (cal.get(Calendar.MONTH) + 1),
         "HH" -> cal.get(Calendar.HOUR_OF_DAY),
         "mm" -> cal.get(Calendar.MINUTE),
         "s" -> cal.get(Calendar.SECOND),

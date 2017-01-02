@@ -38,6 +38,7 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
   override def valueDeserialize(): Deserializer[String] = new StringDeserializer()
 
   override def subscribeList(): Seq[String] = {
+    //Not good when parse config here
     config = ConfigFactory.parseString(workerConfig)
     config.getStringList("topics")
   }
@@ -45,6 +46,7 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
   private val dataSectionsLock = new ReentrantLock()
   private val dataSections: mutable.Map[String, DataSection] = mutable.Map.empty
 
+  //Should it moved to outside?
   private val fileForwardWorker: FileForwardWorker = new FileForwardWorker(config.getConfig("file_forwarder_config"))
 
   private val fileNaming: FileNamingStrategy = {
@@ -176,17 +178,27 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
   override def process(record: ConsumerRecord[Integer, String]): Unit = {
     val schema = schemaService.getSchema(SchemaInfo(record.topic(), record.key()))
     val sectionInfo = fileNaming.getSectionInfo(record.topic(), System.currentTimeMillis())
-    if (!dataSections.contains(sectionInfo._1)) {
-      //Create section
-      try {
-        dataSectionsLock.lock()
-        if (!dataSections.contains(sectionInfo._1)) {
-          dataSections.put(sectionInfo._1, createDataSection(record.topic(), sectionInfo._1, sectionInfo._2))
-        }
-      } finally {
-        dataSectionsLock.unlock()
+
+    try {
+      dataSectionsLock.lock()
+      if (!dataSections.contains(sectionInfo._1)) {
+        dataSections.put(sectionInfo._1, createDataSection(record.topic(), sectionInfo._1, sectionInfo._2))
       }
+      dataSections(sectionInfo._1).write(schema, record)
+    }finally {
+      dataSectionsLock.unlock()
     }
-    dataSections(sectionInfo._1).write(schema, record)
+//    if (!dataSections.contains(sectionInfo._1)) {
+//      //Create section
+//      try {
+//        dataSectionsLock.lock()
+//        if (!dataSections.contains(sectionInfo._1)) {
+//          dataSections.put(sectionInfo._1, createDataSection(record.topic(), sectionInfo._1, sectionInfo._2))
+//        }
+//      } finally {
+//        dataSectionsLock.unlock()
+//      }
+//    }
+//    dataSections(sectionInfo._1).write(schema, record)
   }
 }
