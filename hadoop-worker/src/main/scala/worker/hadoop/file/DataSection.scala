@@ -112,7 +112,7 @@ class DataSection(val identity: String,
     val metaFile = new Path(sectionDir, DataSection.METADATA_FILE_NAME)
     ResourceControl.using(metaFile.getFileSystem(new Configuration()).create(metaFile)) {
       metaWriter =>
-        metaWriter.writeUTF(getMetaString)
+        metaWriter.writeBytes(getMetaString)
     }
   }
 
