@@ -39,7 +39,7 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) with Logg
 
   info("===== TimeBasedStrategyFileNaming =====")
   info(s" Interval: ${Duration(interval, TimeUnit.MILLISECONDS).toMinutes}")
-  info(s" Name Pattern: ${namePattern}")
+  info(s" Name Pattern: $namePattern")
 
   /**
     * Get file name that record belongs to
@@ -56,12 +56,12 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) with Logg
     cal.setTimeInMillis(itvTime)
     debugResult("Get File Name: %s") {
       StrSubstitutor.replace(namePattern, Map[String, Any](
-        "yyyy" -> cal.get(Calendar.YEAR),
-        "dd" -> cal.get(Calendar.DAY_OF_MONTH),
-        "MM" -> (cal.get(Calendar.MONTH) + 1),
-        "HH" -> cal.get(Calendar.HOUR_OF_DAY),
-        "mm" -> cal.get(Calendar.MINUTE),
-        "s" -> cal.get(Calendar.SECOND),
+        "yyyy" -> f"${cal.get(Calendar.YEAR)}%04d",
+        "dd" -> f"${cal.get(Calendar.DAY_OF_MONTH)}%02d",
+        "MM" -> f"${cal.get(Calendar.MONTH) + 1}%02d",
+        "HH" -> f"${cal.get(Calendar.HOUR_OF_DAY)}%02d",
+        "mm" -> f"${cal.get(Calendar.MINUTE)}%02d",
+        "s" -> f"${cal.get(Calendar.SECOND)}%02d",
         "version" -> version,
         "topic" -> topic
       ))
@@ -70,7 +70,7 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) with Logg
 
   /**
     *
-    * @param file
+    * @param file data file to check
     * @return
     */
   override def isFileNeedTobeSplit(file: DataFile): Boolean = false
