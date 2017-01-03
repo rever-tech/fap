@@ -13,7 +13,6 @@ class JsonSchemaTest extends FunSuite {
     assert(JsonType("double") == JsonDouble())
     assert(JsonType("bool") == JsonBool())
     assert(JsonType("string") == JsonString())
-    assert(JsonType("obj_as_string") == JsonObjAsString())
   }
 
   test("JsonType apply on unsupported type should throw SchemaFormatException") {
@@ -29,7 +28,6 @@ class JsonSchemaTest extends FunSuite {
     assert(JsonType("[double]") == JsonArray(JsonDouble()))
     assert(JsonType("[bool]") == JsonArray(JsonBool()))
     assert(JsonType("[string]") == JsonArray(JsonString()))
-    assert(JsonType("[obj_as_string]") == JsonArray(JsonObjAsString()))
   }
 
   test("JsonType apply on object of primitive types should succeed") {
@@ -51,7 +49,6 @@ class JsonSchemaTest extends FunSuite {
       NameAndType("float", JsonFloat()),
       NameAndType("int", JsonInt()),
       NameAndType("long", JsonLong()),
-      NameAndType("obj_as_string", JsonObjAsString()),
       NameAndType("string", JsonString())
     ))
     assert(real == expect)
@@ -82,7 +79,6 @@ class JsonSchemaTest extends FunSuite {
         NameAndType("bool", JsonArray(JsonBool())),
         NameAndType("long", JsonLong())
       ))),
-      NameAndType("obj_as_string", JsonObjAsString()),
       NameAndType("string", JsonString())
     ))
     assert(real == expect)
@@ -111,7 +107,6 @@ class JsonSchemaTest extends FunSuite {
         NameAndType("bool", JsonArray(JsonBool())),
         NameAndType("long", JsonLong())
       ))),
-      NameAndType("obj_as_string", JsonObjAsString()),
       NameAndType("string", JsonString())
     )))
   }

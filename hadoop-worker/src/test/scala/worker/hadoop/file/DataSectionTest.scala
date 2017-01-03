@@ -56,8 +56,7 @@ class DataSectionTest extends FunSuite with TestUtil {
         NameAndType("mylong", JsonLong()),
         NameAndType("mynestedrecord", JsonObject(Seq(NameAndType("mynestedint", JsonInt())))),
         NameAndType("myrecordarray", JsonArray(JsonObject(Seq(NameAndType("a", JsonInt()), NameAndType("b", JsonInt()))))),
-        NameAndType("mystring", JsonString()),
-        NameAndType("myobjasstring", JsonObjAsString())
+        NameAndType("mystring", JsonString())
       ))
 
     val recordValue =

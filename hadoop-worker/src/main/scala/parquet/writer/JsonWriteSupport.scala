@@ -66,12 +66,11 @@ class JsonWriteSupport(schema: JsonSchema, conf: Configuration)
     case JsonObject(_) => data.get(fieldName).map(_.asInstanceOf[Map[String, Any]])
     case JsonArray(_) => data.get(fieldName).map(_.asInstanceOf[Seq[Any]])
     case JsonBool() => data.get(fieldName).map(_.asInstanceOf[Boolean])
-    case JsonInt() => data.get(fieldName).map(NumberConverter.toInt)
-    case JsonLong() => data.get(fieldName).map(NumberConverter.toLong)
-    case JsonFloat() => data.get(fieldName).map(NumberConverter.toFloat)
-    case JsonDouble() => data.get(fieldName).map(NumberConverter.toDouble)
+    case JsonInt() => data.get(fieldName).map(TypeConverter.toInt)
+    case JsonLong() => data.get(fieldName).map(TypeConverter.toLong)
+    case JsonFloat() => data.get(fieldName).map(TypeConverter.toFloat)
+    case JsonDouble() => data.get(fieldName).map(TypeConverter.toDouble)
     case JsonString() => data.get(fieldName).map(getString)
-    case JsonObjAsString() => data.get(fieldName).map(objectMapper.writeValueAsString)
   }
 
   private def writeValue(jsonType: JsonType, messageType: Type, value: Any) = jsonType match {
@@ -80,12 +79,11 @@ class JsonWriteSupport(schema: JsonSchema, conf: Configuration)
     case JsonLong() => recordConsumer.addLong(value.asInstanceOf[Long])
     case JsonFloat() => recordConsumer.addFloat(value.asInstanceOf[Float])
     case JsonDouble() => recordConsumer.addDouble(value.asInstanceOf[Double])
-    case JsonString() => recordConsumer.addBinary(Binary.fromCharSequence(value.asInstanceOf[String]))
+    case JsonString() => recordConsumer.addBinary(Binary.fromCharSequence(TypeConverter.toString(value)(objectMapper)))
     case JsonArray(elementType) => listWriter.writeList(elementType, messageType.asGroupType(), value.asInstanceOf[Seq[Any]])
     case JsonObject(_) =>
       writeRecord(jsonType.asInstanceOf[JsonObject],
         messageType.asGroupType(), value.asInstanceOf[Map[String, Any]])
-    case JsonObjAsString() => recordConsumer.addBinary(Binary.fromCharSequence(value.asInstanceOf[String]))
   }
 
   private def writeObjectFields(schema: JsonObject, parquetSchema: GroupType, data: Map[String, Any]): Unit = {
@@ -179,16 +177,22 @@ object JsonWriteSupport {
 
 /**
   * Convert any number without losing data
+  *
   * @todo Does we need to convert string?
   */
-object NumberConverter {
-  def toInt(number: Any): Int = number.asInstanceOf[Int]
+object TypeConverter {
+  def toInt(number: Any): Int = number match {
+    case num: Int => num
+    case num: String => num.toInt
+    case any => any.asInstanceOf[Int]
+  }
 
   def toFloat(number: Any): Float = number match {
     case num: Float => num
     case num: Int => num.toFloat
     case num: Long => num.toFloat
     case num: Double => num.toFloat
+    case num: String => num.toFloat
     case any => any.asInstanceOf[Float] //Get class cast exception
   }
 
@@ -197,12 +201,20 @@ object NumberConverter {
     case num: Int => num.toDouble
     case num: Long => num.toLong
     case num: Float => num.toDouble
+    case num: String => num.toDouble
     case any => any.asInstanceOf[Double] //Get class cast exception
   }
 
   def toLong(number: Any): Long = number match {
     case num: Long => num
     case num: Int => num.toLong
+    case num: String => num.toLong
     case any => any.asInstanceOf[Long] //Get class cast exception
+  }
+
+  def toString(any: Any)(implicit objectMapper: ObjectMapper): String = any match {
+    case str: String => str
+    case map: Map[Any, Any] => objectMapper.writeValueAsString(map)
+    case any => any.toString
   }
 }
