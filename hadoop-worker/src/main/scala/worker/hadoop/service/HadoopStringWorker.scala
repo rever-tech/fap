@@ -118,7 +118,9 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
       //Commit offset
       debug(s"Forward succeed, finish data section: ${dataSection.getMetaString}")
       try {
-        commitOffsets(dataSection.topicName, dataSection.offsetInfo.toMap)
+
+        //This method is async, commit offset must be in same thread with polling data.
+        queueCommitOffsets(dataSection.topicName, dataSection.offsetInfo.toMap)
         fileForwardWorker.commitSucceed(dataSection.topicName)
         dataSection.clean()
         debug(s"Data section cleaned. ${dataSection.toString}")
