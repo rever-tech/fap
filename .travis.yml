@@ -9,6 +9,8 @@ jdk:
   - oraclejdk8
 
 env:
-  -  BUILD_PRJS=( hadoop-worker collector schemamanager )
+  -  BUILD_PRJ=hadoop-worker
+  -  BUILD_PRJ=collector
+  -  BUILD_PRJ=schemamanager
 
-script: for PRJ in "${BUILD_PRJS[@]}"; do cd $PRJ && mvn clean verify && cd .. ; done
+script: cd $BUILD_PRJ && mvn clean verify
