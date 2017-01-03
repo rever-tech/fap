@@ -48,7 +48,7 @@ class JsonSchemaConverterTest extends FunSuite{
         NameAndType("mynestedrecord", JsonObject(Seq(NameAndType("mynestedint", JsonInt())))),
         NameAndType("myrecordarray", JsonArray(JsonObject(Seq(NameAndType("a", JsonInt()), NameAndType("b", JsonInt()))))),
         NameAndType("mystring", JsonString()),
-        NameAndType("myobjasstring", JsonObjAsString())
+        NameAndType("myobjasstring", JsonString())
       ))
 
     val parquetSchema = JsonSchemaConverter.convert(jsonSchema, Repetition.REQUIRED)

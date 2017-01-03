@@ -25,7 +25,7 @@ case class JsonDouble() extends JsonType
 
 case class JsonString() extends JsonType
 
-case class JsonObjAsString() extends JsonType
+
 
 case class JsonSchema(name: String, version: Int, fields: Seq[NameAndType])
 
@@ -67,7 +67,6 @@ object JsonType {
       case "double" => JsonDouble()
       case "bool" => JsonBool()
       case "string" => JsonString()
-      case "obj_as_string" => JsonObjAsString()
       case s => throw new SchemaFormatException("Data type does not supported", s, null)
     }
   }

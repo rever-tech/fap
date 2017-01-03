@@ -55,8 +55,5 @@ object JsonSchemaConverter {
       Types.primitive(PrimitiveTypeName.BINARY, repetition)
         .as(OriginalType.UTF8).named(nameAndType.name)
 
-    case JsonObjAsString() =>
-      Types.primitive(PrimitiveTypeName.BINARY, repetition)
-        .as(OriginalType.UTF8).named(nameAndType.name)
   }
 }

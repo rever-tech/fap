@@ -13,6 +13,8 @@ import worker.hadoop.util.{ResourceControl, TimeUtil}
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
+import scala.reflect.runtime.universe._
+
 
 /**
   * Created by tiennt4 on 08/12/2016.
@@ -32,13 +34,7 @@ class DataSection(val identity: String,
 
   private final val fileNameCounter: TrieMap[String, AtomicInteger] = TrieMap.empty
 
-  private final val defaultSchema: JsonSchema =
-    JsonSchema("default", 1,
-      Seq(
-        NameAndType("topic", JsonString()),
-        NameAndType("value", JsonString()),
-        NameAndType("version", JsonInt())
-      ))
+
 
   private def setOffsetInfo(offsets: Map[Int, Long]): Unit = {
     offsetInfo ++= offsets
@@ -66,7 +62,7 @@ class DataSection(val identity: String,
     DataFile(name, fullName.toString, JsonParquetWriter.builder(fullName)
       .withSchema(schema match {
         case Some(s) => s
-        case None => defaultSchema
+        case None => DataSection.defaultSchema
       })
       .build())
   }
@@ -81,7 +77,7 @@ class DataSection(val identity: String,
     val (fileName, recordValue) = schema match {
       case Some(s) => (fileNamingStrategy.getFileName(record.topic(), record.key().toString, record.timestamp()), record.value())
       case None => (fileNamingStrategy.getFileName(record.topic(), "unknown", record.timestamp()),
-        s"""{"topic": "${record.topic()}", "version": ${record.key()}, "value": ${s"""${record.value()}"""}}""")
+        s"""{"topic": "${record.topic()}", "version": ${record.key()}, "value": ${Literal(Constant(record.value())).toString}}""")
     }
     if (!files.contains(fileName)) {
       synchronized {
@@ -174,4 +170,12 @@ object DataSection {
             fileNamingStrategy: FileNamingStrategy,
             metadata: Map[String, String] = Map.empty): DataSection =
     new DataSection(identity, uri, topicName, timestamp, createdTime, fileNamingStrategy, metadata)
+
+  private final val defaultSchema: JsonSchema =
+    JsonSchema("default", 1,
+      Seq(
+        NameAndType("topic", JsonString()),
+        NameAndType("value", JsonString()),
+        NameAndType("version", JsonInt())
+      ))
 }
