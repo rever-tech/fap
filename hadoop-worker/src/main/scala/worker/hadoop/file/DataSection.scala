@@ -112,7 +112,7 @@ class DataSection(val identity: String,
     val metaFile = new Path(sectionDir, DataSection.METADATA_FILE_NAME)
     ResourceControl.using(metaFile.getFileSystem(new Configuration()).create(metaFile)) {
       metaWriter =>
-        metaWriter.writeUTF(getMetaString)
+        metaWriter.writeBytes(getMetaString)
     }
   }
 
@@ -121,8 +121,7 @@ class DataSection(val identity: String,
   }
 
   def getMetaString: String =
-    s"""
-       |{
+    s"""{
        |  "topic": "${topicName}",
        |  "timestamp": ${timestamp},
        |  "createdTime": ${createdTime},
@@ -137,8 +136,7 @@ class DataSection(val identity: String,
        |  "finishedFiles" : [
        |    ${finishedFiles.map(_.toJson()).mkString(",\n")}
        |  ]
-       |}
-         """.stripMargin
+       |}""".stripMargin
 
 
   override def toString: String = {

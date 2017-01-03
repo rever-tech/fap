@@ -1,13 +1,16 @@
 package worker.hadoop.service
 
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
 import cakesolutions.kafka.KafkaConsumer
 import cakesolutions.kafka.KafkaConsumer.Conf
 import com.typesafe.config.ConfigFactory
+import kafka.TopicAndOffsets
 import org.apache.kafka.clients.consumer.{ConsumerRecord, OffsetAndMetadata}
 import org.apache.kafka.common.TopicPartition
 
+import scala.annotation.tailrec
 import scala.collection.JavaConversions._
 
 /**
@@ -34,6 +37,8 @@ abstract class AbstractKafkaWorker[K, V](config: String) extends KafkaWorker[K, 
 
   def valueDeserialize(): org.apache.kafka.common.serialization.Deserializer[V]
 
+  protected val offsetToCommit = new ConcurrentLinkedQueue[TopicAndOffsets]()
+
   def subscribeList(): Seq[String]
 
   def beforeStart(): Unit
@@ -48,22 +53,36 @@ abstract class AbstractKafkaWorker[K, V](config: String) extends KafkaWorker[K, 
 
   val KafkaPollTimeInMs = 100
 
-  def commitOffset(topic: String, partition: Int, offset: Long): Unit =
+  private def commitOffset(topic: String, partition: Int, offset: Long): Unit =
     kafkaConsumer.commitSync(
       Map(new TopicPartition(topic, partition) -> new OffsetAndMetadata(offset)))
 
-  def commitOffsets(offsets: Map[String, Map[Int, Long]]): Unit =
+  private def commitOffsets(offsets: Map[String, Map[Int, Long]]): Unit =
     kafkaConsumer.commitSync(offsets.flatMap(topic => topic._2.map(partition =>
       new TopicPartition(topic._1, partition._1) -> new OffsetAndMetadata(partition._2))))
 
-  def commitOffsets(topic: String, offsets: Map[Int, Long]): Unit =
+  private def commitOffsets(topic: String, offsets: Map[Int, Long]): Unit =
     kafkaConsumer.commitSync(offsets.map(offset =>
       new TopicPartition(topic, offset._1) -> new OffsetAndMetadata(offset._2)))
+
+  def queueCommitOffsets(topic: String, offsets: Map[Int, Long]) : Unit = {
+    offsetToCommit.offer(TopicAndOffsets(topic, offsets))
+  }
 
 
   val flag = new AtomicBoolean(false)
 
   val running = new AtomicBoolean(false)
+
+  @tailrec
+  private def commit(): Unit = {
+    Option(offsetToCommit.poll()) match {
+      case Some(offset) =>
+        commitOffsets(offset.topicName, offset.offsets)
+        commit()
+      case None =>
+    }
+  }
 
   def start(): Unit = {
     running.set(true)
@@ -73,7 +92,10 @@ abstract class AbstractKafkaWorker[K, V](config: String) extends KafkaWorker[K, 
       kafkaRecords.toIterable.foreach {
         process
       }
+      //Should it called after every poll?
+      commit()
     }
+
     afterStop()
     running.set(false)
   }

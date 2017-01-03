@@ -116,12 +116,21 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
   def forwardCallback(dataSection: DataSection): Try[Unit] => Unit = {
     case Success(_) =>
       //Commit offset
-      commitOffsets(dataSection.topicName, dataSection.offsetInfo.toMap)
-      fileForwardWorker.commitSucceed(dataSection.topicName)
-      dataSection.clean()
+      debug(s"Forward succeed, finish data section: ${dataSection.getMetaString}")
+      try {
+
+        //This method is async, commit offset must be in same thread with polling data.
+        queueCommitOffsets(dataSection.topicName, dataSection.offsetInfo.toMap)
+        fileForwardWorker.commitSucceed(dataSection.topicName)
+        dataSection.clean()
+        debug(s"Data section cleaned. ${dataSection.toString}")
+      } catch {
+        case e: Throwable => error("Commit offset and clean data section failure.", e)
+      }
 
     case Failure(t) =>
       //TODO: Implement notify when failure
+      error("Forward data section failure", t)
       notifier.notify("", "", t)
       fileForwardWorker.commitFailure(dataSection.topicName)
   }
