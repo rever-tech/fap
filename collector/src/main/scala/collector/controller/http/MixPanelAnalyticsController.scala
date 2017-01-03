@@ -34,6 +34,7 @@ get("/mixpanel/track") {
 
   /**
     * Receive `user info` and update to user-profile
+    * @todo implement engage
     */
   post("/mixpanel/engage") {
     req: Request => {
@@ -43,6 +44,7 @@ get("/mixpanel/track") {
 
   /**
     * Return configurations
+    * @todo implement decide
     */
   get("/mixpanel/decide") {
     req: Request => {
