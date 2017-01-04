@@ -1,8 +1,9 @@
 package parquet.schema.json
 
-import com.typesafe.config.{ConfigFactory, ConfigRenderOptions, ConfigValue, ConfigValueType}
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
-import scala.collection.JavaConversions._
+import scala.collection.immutable.ListMap
 
 /**
   * Created by tiennt4 on 07/12/2016.
@@ -26,8 +27,17 @@ case class JsonDouble() extends JsonType
 case class JsonString() extends JsonType
 
 
-
 case class JsonSchema(name: String, version: Int, fields: Seq[NameAndType])
+
+object JsonSchema {
+  def apply(name: String, version: Int, schemaString: String): JsonSchema = {
+    JsonType(schemaString) match {
+      case JsonObject(fields) => new JsonSchema(name, version, fields)
+      case _ => throw new SchemaFormatException("Create schema from string require Object Type", schemaString)
+    }
+  }
+}
+
 
 case class NameAndType(name: String, jsonType: JsonType)
 
@@ -35,13 +45,15 @@ object JsonType {
 
   private val arrayTypePattern = "^\\s*\\[(.+)\\]\\s*$".r
   private val objectTypePattern = "^\\s*(\\{[\\w\\W]+\\})\\s*$".r
+  private val objectMapper = new ObjectMapper().registerModule(DefaultScalaModule)
 
   /**
     * Parse schema from map of `field name` and `field type`
+    *
     * @todo should throw exception when failure or return Option?
-    * @param name name of schema
+    * @param name    name of schema
     * @param version version of schema
-    * @param fields map of field name and it's type
+    * @param fields  map of field name and it's type
     * @return
     */
   def parseSchema(name: String, version: Int, fields: Map[String, String]): JsonSchema = {
@@ -54,10 +66,10 @@ object JsonType {
       case arrayTypePattern(childs) => JsonArray(JsonType(childs))
       case objectTypePattern(obj) =>
         try {
-          val conf = ConfigFactory.parseString(obj)
-          val fieldsName: List[String] = conf.root().keySet().toList.sorted
-          JsonObject(fieldsName.map(name => NameAndType(name,
-            JsonType(parseConfigValue(conf.getValue(name))))))
+          val tmp = objectMapper.readValue(obj, classOf[Map[String, Any]])
+          val fields = ListMap(tmp.toSeq.sortBy(_._1): _*)
+          JsonObject(fields.toSeq.map(field => NameAndType(field._1,
+            JsonType(parseConfigValue(field._2)))))
         } catch {
           case e: Throwable => throw new SchemaFormatException(obj, e)
         }
@@ -71,9 +83,10 @@ object JsonType {
     }
   }
 
-  private def parseConfigValue(value: ConfigValue): String = value.valueType() match {
-    case ConfigValueType.STRING => value.unwrapped().asInstanceOf[String]
-    case ConfigValueType.OBJECT => value.render(ConfigRenderOptions.concise())
+  private def parseConfigValue(value: Any): String = value match {
+    case map: Map[Any, Any] => objectMapper.writeValueAsString(map)
+    case seq: Seq[Any] => objectMapper.writeValueAsString(seq)
+    case str: String => str
     case _ => throw new SchemaFormatException("Data type does not supported", value.toString, null)
   }
 }
