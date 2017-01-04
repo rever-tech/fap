@@ -215,6 +215,7 @@ object TypeConverter {
   def toString(any: Any)(implicit objectMapper: ObjectMapper): String = any match {
     case str: String => str
     case map: Map[Any, Any] => objectMapper.writeValueAsString(map)
+    case seq: Seq[Any] => objectMapper.writeValueAsString(seq)
     case any => any.toString
   }
 }
