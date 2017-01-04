@@ -15,7 +15,7 @@ class MixPanelAnalyticsController  @Inject()(service: AnalyticsService) extends 
 get("/mixpanel/track") {
     request: Request => {
       service.process(
-        AnalyticRequest("people_analytic", 0,
+        AnalyticRequest(request.getParam("topic"), request.getIntParam("version", 0),
           new String(Base64.getDecoder.decode(request.params("data"))),
           request.params.getOrElse("_", System.currentTimeMillis().toString).toLong))
       response.ok
@@ -25,7 +25,7 @@ get("/mixpanel/track") {
   post("/mixpanel/track") {
     request: Request => {
       service.process(
-        AnalyticRequest("people_analytic", 0,
+        AnalyticRequest(request.getParam("topic"), request.getIntParam("version", 0),
           new String(Base64.getDecoder.decode(request.params("data"))),
           request.params.getOrElse("_", System.currentTimeMillis().toString).toLong))
       response.ok
