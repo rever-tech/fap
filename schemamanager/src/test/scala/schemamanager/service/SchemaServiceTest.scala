@@ -5,7 +5,7 @@ import com.twitter.inject.{Injector, IntegrationTest}
 import com.twitter.util.Await
 import schemamanager.client.LevelDBClient
 import schemamanager.domain.Implicits._
-import schemamanager.domain.{Schema, TSchema, TSchemaData}
+import schemamanager.domain._
 import schemamanager.module.SchemaServiceModuleTest
 
 /**
@@ -23,12 +23,25 @@ class SchemaServiceTest extends IntegrationTest {
     levelDBClient.destroy
   }
 
+  def getType(fieldSchemas: Seq[TFieldSchema], name: String): Option[String] = {
+    fieldSchemas.flatMap(f => if (f.name.equals(name)) Some(f.`type`) else None) match {
+      case Nil => None
+      case x => Some(x(0))
+    }
+  }
+
   val name = "schema name test"
   val version = 1
-  val schemaData = TSchemaData(Map(
-    "age" -> "int",
-    "name" -> "string",
-    "address" -> "string"
+  val schemaData = TSchemaData(Seq(
+    TFieldSchema("age", "int"),
+    TFieldSchema("name", "string"),
+    TFieldSchema("address", "string")
+  ))
+
+  val schemaData2 = TSchemaData(Seq(
+    TFieldSchema("age", "int"),
+    TFieldSchema("name", "string"),
+    TFieldSchema("name", "string")
   ))
 
   "add schema" in {
@@ -37,12 +50,26 @@ class SchemaServiceTest extends IntegrationTest {
     val schemaResp = Await.result(schemaService.getSchema(name, version)).get
     assertResult(name)(schemaResp.name)
     assertResult(version)(schemaResp.version)
-    assertResult(0)((schemaResp.schema.nameToType.toSet diff schemaData.nameToType.toSet).toMap.size)
-    assertResult(schemaData.nameToType.get("age"))(schemaResp.schema.nameToType.get("age"))
-    assertResult(schemaData.nameToType.get("age1"))(schemaResp.schema.nameToType.get("age1"))
+    assertResult(0)((schemaResp.schema.fieldSchemas.toSet diff schemaData.fieldSchemas.toSet).size)
+    assertResult(getType(schemaData.fieldSchemas, "age"))(getType(schemaResp.schema.fieldSchemas, "age"))
+    assertResult(getType(schemaData.fieldSchemas, "age1"))(getType(schemaResp.schema.fieldSchemas, "age1"))
 
     assertResult(true)(Await.result(schemaService.deleteSchemaName(name)))
   }
+
+  "add schema with field duplicated" in {
+    val schema = TSchema(name, version, schemaData2)
+    try {
+      Await.result(schemaService.addSchema(schema))
+      assert(false)
+    } catch {
+      case e: Exception => {
+        println(e)
+        assert(true)
+      }
+    }
+  }
+
   "get schema by name" in {
     val numVersion = 100
     for (i <- 1 to numVersion) {
@@ -53,9 +80,9 @@ class SchemaServiceTest extends IntegrationTest {
     assertResult(numVersion)(schemaVersionsResp.size)
     schemaVersionsResp.foreach(schemaResp => {
       assertResult(name)(schemaResp.name)
-      assertResult(0)((schemaResp.schema.nameToType.toSet diff schemaData.nameToType.toSet).toMap.size)
-      assertResult(schemaData.nameToType.get("age"))(schemaResp.schema.nameToType.get("age"))
-      assertResult(schemaData.nameToType.get("age1"))(schemaResp.schema.nameToType.get("age1"))
+      assertResult(0)((schemaResp.schema.fieldSchemas.toSet diff schemaData.fieldSchemas.toSet).size)
+      assertResult(getType(schemaData.fieldSchemas, "age"))(getType(schemaResp.schema.fieldSchemas, "age"))
+      assertResult(getType(schemaData.fieldSchemas, "age1"))(getType(schemaResp.schema.fieldSchemas, "age1"))
     })
 
     assertResult(true)(Await.result(schemaService.deleteSchemaName(name)))
