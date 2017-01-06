@@ -2,6 +2,7 @@
 
 include "SchemaManagerDT.thrift"
 
+
 service TSchemaManager {
     bool addSchema(1: SchemaManagerDT.TSchema schema)
     SchemaManagerDT.TGetSchemasResp getSchemas(1:string name)

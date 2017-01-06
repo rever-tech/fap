@@ -17,8 +17,7 @@ import scala.collection.JavaConversions._
 class JsonWriteSupport(schema: JsonSchema, conf: Configuration)
   extends WriteSupport[String] {
 
-  private val objectMapper = new ObjectMapper()
-    .registerModule(DefaultScalaModule)
+
   private val messageType = JsonSchemaConverter.convert(schema)
   var recordConsumer: RecordConsumer = _
   var listWriter: ListWriter = _
@@ -37,7 +36,7 @@ class JsonWriteSupport(schema: JsonSchema, conf: Configuration)
   }
 
   override def write(record: String): Unit = {
-    val data = objectMapper.readValue(record, classOf[Map[String, Any]])
+    val data = TypeConverter.objectMapper.readValue(record, classOf[Map[String, Any]])
     recordConsumer.startMessage()
     writeMessageFields(schema.fields, messageType.getFields, data)
     recordConsumer.endMessage()
@@ -70,7 +69,7 @@ class JsonWriteSupport(schema: JsonSchema, conf: Configuration)
     case JsonLong() => data.get(fieldName).map(TypeConverter.toLong)
     case JsonFloat() => data.get(fieldName).map(TypeConverter.toFloat)
     case JsonDouble() => data.get(fieldName).map(TypeConverter.toDouble)
-    case JsonString() => data.get(fieldName).map(getString)
+    case JsonString() => data.get(fieldName).map(TypeConverter.toString)
   }
 
   private def writeValue(jsonType: JsonType, messageType: Type, value: Any) = jsonType match {
@@ -79,7 +78,7 @@ class JsonWriteSupport(schema: JsonSchema, conf: Configuration)
     case JsonLong() => recordConsumer.addLong(value.asInstanceOf[Long])
     case JsonFloat() => recordConsumer.addFloat(value.asInstanceOf[Float])
     case JsonDouble() => recordConsumer.addDouble(value.asInstanceOf[Double])
-    case JsonString() => recordConsumer.addBinary(Binary.fromCharSequence(TypeConverter.toString(value)(objectMapper)))
+    case JsonString() => recordConsumer.addBinary(Binary.fromCharSequence(value.asInstanceOf[String]))
     case JsonArray(elementType) => listWriter.writeList(elementType, messageType.asGroupType(), value.asInstanceOf[Seq[Any]])
     case JsonObject(_) =>
       writeRecord(jsonType.asInstanceOf[JsonObject],
@@ -98,11 +97,6 @@ class JsonWriteSupport(schema: JsonSchema, conf: Configuration)
 
   override def prepareForWrite(recordConsumer: RecordConsumer): Unit = {
     this.recordConsumer = recordConsumer
-  }
-
-  private def getString(value: Any): String = value match {
-    case str: String => str
-    case any => any.toString
   }
 
   abstract private[parquet] class ListWriter {
@@ -164,7 +158,6 @@ class JsonWriteSupport(schema: JsonSchema, conf: Configuration)
       }
     }
   }
-
 }
 
 object JsonWriteSupport {
@@ -181,6 +174,10 @@ object JsonWriteSupport {
   * @todo Does we need to convert string?
   */
 object TypeConverter {
+
+  val objectMapper: ObjectMapper = new ObjectMapper()
+    .registerModule(DefaultScalaModule)
+
   def toInt(number: Any): Int = number match {
     case num: Int => num
     case num: String => num.toInt
@@ -212,10 +209,10 @@ object TypeConverter {
     case any => any.asInstanceOf[Long] //Get class cast exception
   }
 
-  def toString(any: Any)(implicit objectMapper: ObjectMapper): String = any match {
+  def toString(any: Any): String = any match {
     case str: String => str
     case map: Map[Any, Any] => objectMapper.writeValueAsString(map)
     case seq: Seq[Any] => objectMapper.writeValueAsString(seq)
-    case any => any.toString
+    case other => other.toString
   }
 }

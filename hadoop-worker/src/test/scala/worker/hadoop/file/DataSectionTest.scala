@@ -14,7 +14,7 @@ import util.TestUtil
   * Created by tiennt4 on 17/12/2016.
   */
 class DataSectionTest extends FunSuite with TestUtil {
-
+  val writerClass = "worker.hadoop.writer.ParquetFileWriter"
   val sectionTimestamp = {
     val tmpCal = Calendar.getInstance()
     tmpCal.set(2016, 11, 17, 11, 0, 0)
@@ -30,7 +30,7 @@ class DataSectionTest extends FunSuite with TestUtil {
       |}
     """.stripMargin)
   val section = DataSection("test_section", "src/test/resources/sections", "test_topic",
-    sectionTimestamp, sectionCreatedTime, new TimeBasedStrategy(fileNamingConf))
+    sectionTimestamp, sectionCreatedTime, new TimeBasedStrategy(fileNamingConf), writerClass)
 
   test("Section directory should correct") {
     val createTimeCal = Calendar.getInstance()

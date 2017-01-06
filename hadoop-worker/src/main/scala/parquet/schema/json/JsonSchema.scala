@@ -56,9 +56,8 @@ object JsonType {
     * @param fields  map of field name and it's type
     * @return
     */
-  def parseSchema(name: String, version: Int, fields: Map[String, String]): JsonSchema = {
-    val fieldsName = fields.keySet.toList.sorted
-    JsonSchema(name, version, fieldsName.map(fName => NameAndType(fName, JsonType(fields(fName)))))
+  def parseSchema(name: String, version: Int, fields: Seq[(String, String)]): JsonSchema = {
+    JsonSchema(name, version, fields.map(fName => NameAndType(fName._1, JsonType(fName._2))))
   }
 
   def apply(string: String): JsonType = {

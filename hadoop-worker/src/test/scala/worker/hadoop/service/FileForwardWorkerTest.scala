@@ -15,6 +15,7 @@ import worker.hadoop.util.FileSystemConfig
   */
 class FileForwardWorkerTest extends FunSuite with TestUtil {
 
+  val writerClass = "worker.hadoop.writer.ParquetFileWriter"
   val conf = ConfigFactory.parseString(
     """
       |{
@@ -39,7 +40,7 @@ class FileForwardWorkerTest extends FunSuite with TestUtil {
         |}
       """.stripMargin)
     val section = DataSection("test_section", "src/test/resources/sections", "test_topic",
-      sectionTimestamp, sectionCreatedTime, new TimeBasedStrategy(fileNamingConf))
+      sectionTimestamp, sectionCreatedTime, new TimeBasedStrategy(fileNamingConf), writerClass)
 
     val recordTimeStamp = System.currentTimeMillis()
     val v1Schema = JsonSchema("test_topic", 1,
