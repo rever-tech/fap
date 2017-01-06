@@ -99,7 +99,7 @@ class JsonSchemaTest extends FunSuite {
       "bool" -> "bool",
       "string" -> "string",
       "obj_as_string" -> "string"
-    )
+    ).toSeq.sortBy(_._1)
     assert(JsonType.parseSchema("test", 1, data) == JsonSchema("test", 1, Seq(
       NameAndType("bool", JsonBool()),
       NameAndType("double", JsonDouble()),

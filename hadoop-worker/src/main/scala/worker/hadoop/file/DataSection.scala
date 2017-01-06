@@ -8,8 +8,8 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import parquet.schema.json.{JsonInt, JsonSchema, JsonString, NameAndType}
-import parquet.writer.JsonParquetWriter
 import worker.hadoop.util.{ResourceControl, TimeUtil}
+import worker.hadoop.writer.FileWriter
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
@@ -23,7 +23,10 @@ class DataSection(val identity: String,
                   val uri: String, val topicName: String,
                   val timestamp: Long, val createdTime: Long,
                   val fileNamingStrategy: FileNamingStrategy,
-                  val metadata: Map[String, String] = Map.empty) {
+                  val writerClass: String,
+                  val writerConfig: Map[String, String] = null,
+                  val metadata: Map[String, String] = Map.empty
+                 ) {
 
   val sectionDir = new Path(uri, s"$identity-$topicName-${TimeUtil.formatDateToMinute(timestamp)}-${TimeUtil.formatDateToMinute(createdTime)}")
 
@@ -33,8 +36,6 @@ class DataSection(val identity: String,
   private[file] final val files: mutable.Map[String, DataFile] = mutable.Map.empty
 
   private final val fileNameCounter: TrieMap[String, AtomicInteger] = TrieMap.empty
-
-
 
   private def setOffsetInfo(offsets: Map[Int, Long]): Unit = {
     offsetInfo ++= offsets
@@ -52,19 +53,18 @@ class DataSection(val identity: String,
         fileNameCounter(fileName) = tmp
         tmp.incrementAndGet()
     }
-    s"$fileName-$identity-${TimeUtil.formatDateToMinute(timestamp)}-$counter.parquet"
+    s"$fileName-$identity-${TimeUtil.formatDateToMinute(timestamp)}-$counter"
   }
 
   private def createDataFile(fileName: String, schema: Option[JsonSchema], metadata: Map[String, String]): DataFile = {
     val name = getFullDataFileName(fileName)
     val fullName = new Path(sectionDir, name)
+    val constructor = Class.forName(writerClass)
+      .getConstructor(classOf[String], classOf[JsonSchema], classOf[Map[String, String]])
+    val fileWriter = constructor.newInstance(fullName.toString, schema.getOrElse(DataSection.defaultSchema), writerConfig)
+      .asInstanceOf[FileWriter[String]]
 
-    DataFile(name, fullName.toString, JsonParquetWriter.builder(fullName)
-      .withSchema(schema match {
-        case Some(s) => s
-        case None => DataSection.defaultSchema
-      })
-      .build())
+    DataFile(fileWriter.getFileNameWithExtension(name), fileWriter.getFileNameWithExtension, fileWriter)
   }
 
   /**
@@ -155,7 +155,10 @@ object DataSection {
     val offsets: Map[Int, Long] = data("offset").asInstanceOf[Seq[Map[String, Any]]]
       .map(e => e("partition").asInstanceOf[Int] -> e("offset").asInstanceOf[Long]).toMap
     val metadata = data("metadata").asInstanceOf[Map[String, String]]
-    val section = this (identity, uri, topicName, timestamp, createdTime, null, metadata)
+
+    val section = apply(identity, uri, topicName, timestamp, createdTime,
+      fileNamingStrategy = null, writerClass = null, writerConfig = null, metadata = metadata)
+
     section.setOffsetInfo(offsets)
     val files = data("finishedFiles").asInstanceOf[Seq[Map[String, Any]]].map(e =>
       DataFile(e("name").asInstanceOf[String], e("fullPath").asInstanceOf[String], null)
@@ -168,8 +171,11 @@ object DataSection {
             uri: String, topicName: String,
             timestamp: Long, createdTime: Long,
             fileNamingStrategy: FileNamingStrategy,
+            writerClass: String,
+            writerConfig: Map[String, String] = null,
             metadata: Map[String, String] = Map.empty): DataSection =
-    new DataSection(identity, uri, topicName, timestamp, createdTime, fileNamingStrategy, metadata)
+    new DataSection(identity, uri, topicName, timestamp, createdTime,
+      fileNamingStrategy, writerClass, writerConfig, metadata)
 
   private final val defaultSchema: JsonSchema =
     JsonSchema("default", 1,

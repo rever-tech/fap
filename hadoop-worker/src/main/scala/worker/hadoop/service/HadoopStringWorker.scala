@@ -31,6 +31,11 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
   final var config: Config = _
   private final val workerName = config.getString("worker_name")
   private final val workDir = config.getString("work_dir")
+  private final val writerClass = config.getString("file_writer.class_name")
+  private final val writerConfig = if (config.hasPath("file_writer.config")) {
+    config.getConfig("file_writer.config").entrySet()
+      .map(e => e.getKey -> e.getValue.unwrapped().toString).toMap
+  } else null
 
   override def keyDeserialize(): Deserializer[Integer] = new IntegerDeserializer()
 
@@ -177,7 +182,9 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
 
   private def createDataSection(topicName: String, sectionName: String, sectionTimestamp: Long): DataSection = {
     infoResult("[Hadoop Worker] Create DataSection: %s") {
-      DataSection(workerName, workDir, topicName, sectionTimestamp, System.currentTimeMillis(), fileNaming)
+      DataSection(workerName, workDir, topicName, sectionTimestamp,
+        System.currentTimeMillis(), fileNamingStrategy = fileNaming,
+        writerClass = writerClass, writerConfig = writerConfig)
     }
   }
 

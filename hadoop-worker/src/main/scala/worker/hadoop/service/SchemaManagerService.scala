@@ -41,8 +41,11 @@ class SchemaManagerService(schemaManagerClient: TSchemaManager[Future]) extends 
 
   private def getJsonSchemaFromSchemaManager(schemaInfo: SchemaInfo): Option[JsonSchema] = {
     Await.result(schemaManagerClient.getSchema(schemaInfo.name, schemaInfo.version)
-      .map(resp => resp.data.map(schema =>
-        JsonType.parseSchema(schema.name, schema.version, schema.schema.nameToType.toMap)))
+      .map(resp => resp.data.map(schema => {
+        val tmp = schema.schema.fieldSchemas.map(f => (f.name, f.`type`))
+        JsonType.parseSchema(schema.name, schema.version, tmp)
+      })
+      )
       , 5 seconds)
   }
 
