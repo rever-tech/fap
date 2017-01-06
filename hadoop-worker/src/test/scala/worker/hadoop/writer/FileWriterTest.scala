@@ -74,9 +74,9 @@ class FileWriterTest extends FunSuite with TestUtil {
 
     val expectedString = Seq("[1,2,4,5]",
       "false", "12.3", "12.3", "3", "1481956237000",
-      """{\"mynestedint\":39}""",
-      """[{\"a\":3,\"b\":4},{\"a\":3,\"b\":4}]""",
-      "hello world", """{\"abc\":323,\"hello\":\"world\"}""", "[12,313,13]").mkString("\t")
+      """{"mynestedint":39}""",
+      """[{"a":3,"b":4},{"a":3,"b":4}]""",
+      "hello world", """{"abc":323,"hello":"world"}""", "[12,313,13]").mkString("\t")
     val objectMapper = new ObjectMapper().registerModule(DefaultScalaModule)
     val data = objectMapper.readValue(record, classOf[Map[String, Any]])
     val writer = new TextFileWriter("src/test/resources/files/tmp_abc", jsonSchema, null)
