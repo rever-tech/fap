@@ -2,7 +2,6 @@ package worker.hadoop.writer
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import org.apache.commons.lang3.StringEscapeUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import parquet.schema.json.JsonSchema
@@ -135,6 +134,6 @@ object TextFileWriter {
       }
       case None => ""
     }
-    StringEscapeUtils.escapeJava(fieldValueAsString)
+    fieldValueAsString.replaceAll("[\t\r\n]", "")
   }
 }
