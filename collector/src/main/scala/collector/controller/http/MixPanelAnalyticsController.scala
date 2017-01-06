@@ -16,8 +16,7 @@ get("/mixpanel/track") {
     request: Request => {
       service.process(
         AnalyticRequest(request.getParam("topic"), request.getIntParam("version", 0),
-          new String(Base64.getDecoder.decode(request.params("data"))),
-          request.params.getOrElse("_", System.currentTimeMillis().toString).toLong))
+          new String(Base64.getDecoder.decode(request.params("data")))))
       response.ok
     }
   }
@@ -26,8 +25,7 @@ get("/mixpanel/track") {
     request: Request => {
       service.process(
         AnalyticRequest(request.getParam("topic"), request.getIntParam("version", 0),
-          new String(Base64.getDecoder.decode(request.params("data"))),
-          request.params.getOrElse("_", System.currentTimeMillis().toString).toLong))
+          new String(Base64.getDecoder.decode(request.params("data")))))
       response.ok
     }
   }

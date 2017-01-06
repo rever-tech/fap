@@ -3,7 +3,6 @@ package collector.controller.http
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
-import java.util.Base64
 import javax.imageio.ImageIO
 import javax.inject.Inject
 
