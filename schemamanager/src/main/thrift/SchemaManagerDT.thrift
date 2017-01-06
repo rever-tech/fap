@@ -1,7 +1,12 @@
 #@namespace scala schemamanager.domain
 
+struct TFieldSchema{
+    1: required string name
+    2: required string type
+}
+
 struct TSchemaData {
-    1:map<string, string> nameToType
+    1: list<TFieldSchema> fieldSchemas
 }
 
 struct TSchema {

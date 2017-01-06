@@ -8,4 +8,4 @@ import scala.collection.Map
  * @author sonpn
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-case class SchemaData(nameToType: Map[String, String])
+case class SchemaData(fieldSchemas: Seq[FieldSchema])

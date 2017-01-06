@@ -54,8 +54,15 @@ class LevelDBSchemaService @Inject()(levelDBClient: LevelDBClient) extends Schem
     }
   }
 
+  private def verifySchema(schema: Schema) = {
+    if (schema.schema.fieldSchemas.map(f => f.name).toSet.size != schema.schema.fieldSchemas.size) {
+      throw new Exception("field schemas duplicated")
+    }
+  }
+
   override def addSchema(schema: Schema): Future[Boolean] = futurePool {
     var addOk = false
+    verifySchema(schema)
     val batch = db.createWriteBatch()
     try {
       val schemaNameVersionsKey = getBytes(s"${schemaNameVersionsPrefix}_${schema.name}")

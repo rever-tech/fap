@@ -8,7 +8,7 @@ import com.twitter.util.{Await, Future}
 import schemamanager.Server
 import schemamanager.client.LevelDBClient
 import schemamanager.domain.Implicits.{T2Schema, T2SchemaData}
-import schemamanager.domain.{Schema, TSchema, TSchemaData}
+import schemamanager.domain.{Schema, TFieldSchema, TSchema, TSchemaData}
 import schemamanager.module.SchemaControllerModuleTest
 import schemamanager.service.TSchemaManager
 
@@ -31,14 +31,21 @@ class SchemaControllerTest extends FeatureTest {
     levelDBClient.destroy
   }
 
+  def getType(fieldSchemas: Seq[TFieldSchema], name: String): Option[String] = {
+    fieldSchemas.flatMap(f => if (f.name.equals(name)) Some(f.`type`) else None) match {
+      case Nil => None
+      case x => Some(x(0))
+    }
+  }
+
   "thrift test" should {
 
     val name = "schema name test"
     val version = 1
-    val schemaData = TSchemaData(Map(
-      "age" -> "int",
-      "name" -> "string",
-      "address" -> "string"
+    val schemaData = TSchemaData(Seq(
+      TFieldSchema("age", "int"),
+      TFieldSchema("name", "string"),
+      TFieldSchema("address", "string")
     ))
 
     "add schema" in {
@@ -48,9 +55,10 @@ class SchemaControllerTest extends FeatureTest {
         val schemaResp = Await.result(client.getSchema(name, version)).data.get
         assertResult(name)(schemaResp.name)
         assertResult(version)(schemaResp.version)
-        assertResult(0)((schemaResp.schema.nameToType.toSet diff schemaData.nameToType.toSet).toMap.size)
-        assertResult(schemaData.nameToType.get("age"))(schemaResp.schema.nameToType.get("age"))
-        assertResult(schemaData.nameToType.get("age1"))(schemaResp.schema.nameToType.get("age1"))
+
+        assertResult(0)((schemaResp.schema.fieldSchemas.toSet diff schemaData.fieldSchemas.toSet).size)
+        assertResult(getType(schemaData.fieldSchemas, "age"))(getType(schemaResp.schema.fieldSchemas, "age"))
+        assertResult(getType(schemaData.fieldSchemas, "age1"))(getType(schemaResp.schema.fieldSchemas, "age1"))
       } finally {
         assertResult(true)(Await.result(client.deleteSchemaName(name)))
       }
@@ -66,9 +74,10 @@ class SchemaControllerTest extends FeatureTest {
         assertResult(numVersion)(schemaVersionsResp.size)
         schemaVersionsResp.foreach(schemaResp => {
           assertResult(name)(schemaResp.name)
-          assertResult(0)((schemaResp.schema.nameToType.toSet diff schemaData.nameToType.toSet).toMap.size)
-          assertResult(schemaData.nameToType.get("age"))(schemaResp.schema.nameToType.get("age"))
-          assertResult(schemaData.nameToType.get("age1"))(schemaResp.schema.nameToType.get("age1"))
+
+          assertResult(0)((schemaResp.schema.fieldSchemas.toSet diff schemaData.fieldSchemas.toSet).size)
+          assertResult(getType(schemaData.fieldSchemas, "age"))(getType(schemaResp.schema.fieldSchemas, "age"))
+          assertResult(getType(schemaData.fieldSchemas, "age1"))(getType(schemaResp.schema.fieldSchemas, "age1"))
         })
       } finally {
         assertResult(true)(Await.result(client.deleteSchemaName(name)))
