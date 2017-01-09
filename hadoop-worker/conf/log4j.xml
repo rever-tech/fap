@@ -72,11 +72,11 @@
     </root>
 
     <logger name="org.apache.kafka">
-        <level value="DEBUG"/>
+        <level value="INFO"/>
         <appender-ref ref="kafka_log"/>
     </logger>
     <logger name="worker.hadoop">
-        <level value="INFO"/>
+        <level value="DEBUG"/>
         <appender-ref ref="hadoop-worker"/>
     </logger>
     <logger name="notify_message">

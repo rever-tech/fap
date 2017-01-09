@@ -197,6 +197,8 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
     * @todo benchmark
     */
   override def process(record: ConsumerRecord[Integer, String]): Unit = {
+    debug(s"Consume record of topic `${record.topic()}`, partition: ${record.partition()}, offset: ${record.offset()}")
+    debug(record.value())
     val schema = schemaService.getSchema(SchemaInfo(record.topic(), record.key()))
     val sectionInfo = fileNaming.getSectionInfo(record.topic(), System.currentTimeMillis())
 
