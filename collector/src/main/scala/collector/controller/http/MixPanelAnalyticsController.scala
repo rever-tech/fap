@@ -1,5 +1,6 @@
 package collector.controller.http
 
+import java.nio.charset.Charset
 import java.util.Base64
 import javax.inject.Inject
 
@@ -11,12 +12,12 @@ import com.twitter.finatra.http.Controller
 /**
   * Created by tiennt4 on 23/12/2016.
   */
-class MixPanelAnalyticsController  @Inject()(service: AnalyticsService) extends Controller {
-get("/mixpanel/track") {
+class MixPanelAnalyticsController @Inject()(service: AnalyticsService) extends Controller {
+  get("/mixpanel/track") {
     request: Request => {
       service.process(
         AnalyticRequest(request.getParam("topic"), request.getIntParam("version", 0),
-          new String(Base64.getDecoder.decode(request.params("data")))))
+          new String(Base64.getDecoder.decode(request.params("data")), Charset.forName("UTF-8"))))
       response.ok
     }
   }
@@ -25,23 +26,33 @@ get("/mixpanel/track") {
     request: Request => {
       service.process(
         AnalyticRequest(request.getParam("topic"), request.getIntParam("version", 0),
-          new String(Base64.getDecoder.decode(request.params("data")))))
+          new String(Base64.getDecoder.decode(request.params("data")), Charset.forName("UTF-8"))))
       response.ok
     }
   }
 
   /**
     * Receive `user info` and update to user-profile
+    *
     * @todo implement engage
     */
   post("/mixpanel/engage") {
     req: Request => {
+      // TODO: update user info
+      response.ok(0)
+    }
+  }
+
+  get("/mixpanel/engage") {
+    req: Request => {
+      // TODO: update user info
       response.ok(0)
     }
   }
 
   /**
     * Return configurations
+    *
     * @todo implement decide
     */
   get("/mixpanel/decide") {
