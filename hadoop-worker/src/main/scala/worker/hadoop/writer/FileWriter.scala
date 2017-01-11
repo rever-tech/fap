@@ -80,6 +80,22 @@ class ParquetFileWriter(filePath: String, schema: JsonSchema, conf: Map[String, 
 
 class TextFileWriter(filePath: String, schema: JsonSchema, conf: Map[String, String]) extends FileWriter[String](filePath, schema, conf) {
   override val fileExtension: String = "log"
+
+  private var currentSize: Long = 0
+  //  private val outputStream = new BufferedWriter(new OutputStreamWriter(
+  //    {
+  //      val hadoopConf = {
+  //        val tmp = new Configuration()
+  //        if (conf != null) {
+  //          conf.foreach(c => tmp.set(c._1, c._2))
+  //        }
+  //        tmp
+  //      }
+  //      val path = new Path(getFileNameWithExtension)
+  //      path.getFileSystem(hadoopConf).create(path)
+  //    }
+  //    , "UTF-8"))
+
   private val outputStream = {
     val hadoopConf = {
       val tmp = new Configuration()
@@ -91,6 +107,8 @@ class TextFileWriter(filePath: String, schema: JsonSchema, conf: Map[String, Str
     val path = new Path(getFileNameWithExtension)
     path.getFileSystem(hadoopConf).create(path)
   }
+
+
   /**
     * For Test
     */
@@ -98,7 +116,13 @@ class TextFileWriter(filePath: String, schema: JsonSchema, conf: Map[String, Str
 
   override def writeObject(obj: String): Unit = {
     val data = TextFileWriter.objectMapper.readValue(obj, classOf[Map[String, Any]])
-    outputStream.writeBytes(getLineData(data, schema) + "\n")
+    val bytes = getLineData(data, schema).getBytes("UTF-8")
+    if (currentSize > 0) {
+      outputStream.writeChar('\n')
+      currentSize += 1
+    }
+    currentSize += bytes.length
+    outputStream.write(bytes)
   }
 
   /**
@@ -116,7 +140,7 @@ class TextFileWriter(filePath: String, schema: JsonSchema, conf: Map[String, Str
     outputStream.close()
   }
 
-  override def getCurrentSize(): Long = outputStream.size()
+  override def getCurrentSize(): Long = currentSize
 
 
 }
