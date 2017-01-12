@@ -152,6 +152,7 @@ object TextFileWriter {
   def getString(data: Map[String, Any], fieldName: String): String = {
     val fieldValueAsString = data.get(fieldName) match {
       case Some(value) => value match {
+        case null => "" // Why?
         case map: Map[Any, Any] => objectMapper.writeValueAsString(map)
         case seq: Seq[Any] => objectMapper.writeValueAsString(seq)
         case other => other.toString
