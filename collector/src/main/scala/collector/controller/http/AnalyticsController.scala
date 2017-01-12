@@ -24,8 +24,6 @@ class AnalyticsController @Inject()(service: AnalyticsService) extends Controlle
     }
   }
 
-
-
   private final val gifNamePatternWithVersion = "^([\\w-]+)_v(\\d+).gif".r
   private final val gifNamePatternWithoutVersion = "^([\\w-]+).gif".r
   filter[GifTrackingPathFilter].get("/__:*", name = "GIF Analytic") {
