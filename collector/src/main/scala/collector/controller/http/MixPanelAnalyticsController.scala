@@ -39,16 +39,16 @@ class MixPanelAnalyticsController @Inject()(service: AnalyticsService) extends C
     */
   post("/mixpanel/engage") {
     req: Request => {
-      AnalyticRequest("user_info", req.getIntParam("version", 0),
-        new String(Base64.getDecoder.decode(req.getParam("data")), Charset.forName("utf-8")))
+      service.process(AnalyticRequest("user_info", req.getIntParam("version", 0),
+        new String(Base64.getDecoder.decode(req.getParam("data")), Charset.forName("utf-8"))))
       response.ok(0)
     }
   }
 
   get("/mixpanel/engage") {
     req: Request => {
-      AnalyticRequest("user_info", req.getIntParam("version", 0),
-        new String(Base64.getDecoder.decode(req.getParam("data")), Charset.forName("utf-8")))
+      service.process(AnalyticRequest("user_info", req.getIntParam("version", 0),
+        new String(Base64.getDecoder.decode(req.getParam("data")), Charset.forName("utf-8"))))
       response.ok(0)
     }
   }
