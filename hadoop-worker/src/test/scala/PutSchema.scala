@@ -16,25 +16,12 @@ object PutSchema {
     val objectMapper = new ObjectMapper().registerModule(DefaultScalaModule)
 
     val schemaString =
-      """[{ "name": "$os", "type": "string" },
-        |{ "name": "$browser", "type": "string" },
-        |{ "name": "$browser_version", "type": "string" },
-        |{ "name": "$screen_height", "type": "int" },
-        |{ "name": "$screen_width", "type": "int" },
-        |{ "name": "$current_url", "type": "string" },
-        |{ "name": "$referral", "type": "string" },
-        |{ "name": "$title", "type": "string" },
-        |{ "name": "$initial_referrer", "type": "string" },
-        |{ "name": "$initial_referring_domain", "type": "string" },
-        |{ "name": "ssid", "type": "string" },
-        |{ "name": "uuid", "type": "string" },
-        |{ "name": "$el_id", "type": "string" },
-        |{ "name": "$el_name", "type": "string" },
-        |{ "name": "$el_text", "type": "string" },
-        |{ "name": "$event_type", "type": "string" }]
+      """[{ "name": "$set", "type": "string" },
+        |{ "name": "$token", "type": "string" },
+        |{ "name": "$distinct_id", "type": "string" }]
       """.stripMargin
 
-    val schemaName = "auto_track"
+    val schemaName = "user_info"
     val schemaVersion = 1
     //    val schema = JsonSchema("admin", 1, schemaString)
 
@@ -46,7 +33,7 @@ object PutSchema {
     })
     val client = new FinagledClient(
       ClientBuilder()
-        .hosts(Seq(new InetSocketAddress("fap.orever.vn", 10118)))
+        .hosts(Seq(new InetSocketAddress("172.16.100.202", 10118)))
         .codec(ThriftClientFramedCodec())
         .hostConnectionLimit(1)
         .retries(5)
