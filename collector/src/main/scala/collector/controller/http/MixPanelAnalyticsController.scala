@@ -36,18 +36,19 @@ class MixPanelAnalyticsController @Inject()(service: AnalyticsService) extends C
   /**
     * Receive `user info` and update to user-profile
     *
-    * @todo implement engage
     */
   post("/mixpanel/engage") {
     req: Request => {
-      // TODO: update user info
+      AnalyticRequest("user_info", req.getIntParam("version", 0),
+        new String(Base64.getDecoder.decode(req.getParam("data")), Charset.forName("utf-8")))
       response.ok(0)
     }
   }
 
   get("/mixpanel/engage") {
     req: Request => {
-      // TODO: update user info
+      AnalyticRequest("user_info", req.getIntParam("version", 0),
+        new String(Base64.getDecoder.decode(req.getParam("data")), Charset.forName("utf-8")))
       response.ok(0)
     }
   }
