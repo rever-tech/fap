@@ -137,6 +137,7 @@ class TextFileWriter(filePath: String, schema: JsonSchema, conf: Map[String, Str
     }).mkString("\t")
 
   override def close(): Unit = {
+    outputStream.flush()
     outputStream.close()
   }
 
