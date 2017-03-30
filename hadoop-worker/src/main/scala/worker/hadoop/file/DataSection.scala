@@ -153,7 +153,7 @@ object DataSection {
     val timestamp = data("timestamp").asInstanceOf[Long]
     val createdTime = data("createdTime").asInstanceOf[Long]
     val offsets: Map[Int, Long] = data("offset").asInstanceOf[Seq[Map[String, Any]]]
-      .map(e => e("partition").asInstanceOf[Int] -> e("offset").asInstanceOf[Long]).toMap
+      .map(e => e("partition").asInstanceOf[Int] -> e("offset").asInstanceOf[Number].longValue()).toMap
     val metadata = data("metadata").asInstanceOf[Map[String, String]]
 
     val section = apply(identity, uri, topicName, timestamp, createdTime,
