@@ -56,4 +56,5 @@ object JsonSchemaConverter {
         .as(OriginalType.UTF8).named(nameAndType.name)
 
   }
+
 }

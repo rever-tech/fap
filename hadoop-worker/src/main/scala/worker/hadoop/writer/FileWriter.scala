@@ -116,7 +116,7 @@ class TextFileWriter(filePath: String, schema: JsonSchema, conf: Map[String, Str
 
   override def writeObject(obj: String): Unit = {
     val data = TextFileWriter.objectMapper.readValue(obj, classOf[Map[String, Any]])
-    val bytes = getLineData(data, schema).getBytes("UTF-8")
+    val bytes = getLineData(obj, data, schema).getBytes("UTF-8")
     if (currentSize > 0) {
       outputStream.writeChar('\n')
       currentSize += 1
@@ -131,9 +131,9 @@ class TextFileWriter(filePath: String, schema: JsonSchema, conf: Map[String, Str
     * @param schema
     * @return
     */
-  private[writer] def getLineData(data: Map[String, Any], schema: JsonSchema): String =
+  private[writer] def getLineData(original: String, data: Map[String, Any], schema: JsonSchema): String =
     schema.fields.map(nameAndType => {
-      TextFileWriter.getString(data, nameAndType.name)
+      TextFileWriter.getString(original, data, nameAndType.name)
     }).mkString("\t")
 
   override def close(): Unit = {
@@ -150,16 +150,20 @@ object TextFileWriter {
 
   val objectMapper: ObjectMapper = new ObjectMapper().registerModule(DefaultScalaModule)
 
-  def getString(data: Map[String, Any], fieldName: String): String = {
-    val fieldValueAsString = data.get(fieldName) match {
-      case Some(value) => value match {
-        case null => "" // Why?
-        case map: Map[Any, Any] => objectMapper.writeValueAsString(map)
-        case seq: Seq[Any] => objectMapper.writeValueAsString(seq)
-        case other => other.toString
+  def getString(original: String, data: Map[String, Any], fieldName: String): String = {
+    val fieldValueAsString = fieldName match {
+      case "_" => original
+      case fname => data.get(fname) match {
+        case Some(value) => value match {
+          case null => "" // Why?
+          case map: Map[Any, Any] => objectMapper.writeValueAsString(map)
+          case seq: Seq[Any] => objectMapper.writeValueAsString(seq)
+          case other => other.toString
+        }
+        case None => ""
       }
-      case None => ""
     }
+
     fieldValueAsString.replaceAll("[\t\r\n]", "")
   }
 }
