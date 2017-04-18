@@ -83,7 +83,7 @@ class FileWriterTest extends FunSuite with TestUtil {
     val data = objectMapper.readValue(record, classOf[Map[String, Any]])
     val writer = new TextFileWriter("src/test/resources/files/tmp_abc", jsonSchema, null)
     assert(writer.getFilePath.toString == "src/test/resources/files/tmp_abc.log")
-    val string = writer.getLineData(data, jsonSchema)
+    val string = writer.getLineData(record, data, jsonSchema)
 //    writer.writeObject(record)
     writer.close()
     deleteFile(writer.getFilePath)
@@ -97,7 +97,7 @@ class FileWriterTest extends FunSuite with TestUtil {
 
     val map = TextFileWriter.objectMapper.readValue(decodedString, classOf[Map[String, Any]])
     println(map)
-    println(TextFileWriter.getString(map, "address"))
+    println(TextFileWriter.getString(decodedString, map, "address"))
     val file = new TextFileWriter("test.txt", JsonSchema("test", 1, Seq(NameAndType("property", JsonString()))), Map.empty[String, String])
     file.writeObject(decodedString)
     file.close()
