@@ -152,19 +152,21 @@ class HadoopStringWorker @Inject()(@Named("worker_config") val workerConfig: Str
       val workPath = new Path(workDir)
       val fs = workPath.getFileSystem(new Configuration(false))
       if (fs.exists(workPath)) {
-        val sections = fs.listStatus(workPath, new PathFilter {
-          override def accept(path: Path): Boolean = fs.exists(new Path(path, DataSection.METADATA_FILE_NAME))
-        }).map(section => {
-          val json = ResourceControl.using(fs.open(new Path(section.getPath, DataSection.METADATA_FILE_NAME))) {
-            reader => IOUtils.toString(reader, Charsets.UTF_8);
+
+        val sections = fs.listStatus(workPath).flatMap(section =>
+          fs.exists(new Path(section.getPath, DataSection.METADATA_FILE_NAME)) match {
+            case true =>
+              val json = ResourceControl.using(fs.open(new Path(section.getPath, DataSection.METADATA_FILE_NAME))) {
+                reader => IOUtils.toString(reader, Charsets.UTF_8);
+              }
+              Some(DataSection(json))
+            case false =>
+              fs.delete(section.getPath, true)
+              None
           }
-          DataSection(json)
-        }).sortBy(dataSection => dataSection.timestamp)
+        ).sortBy(dataSection => dataSection.timestamp)
 
         info(s"Found old data: \n${sections.map(section => section.getMetaString).mkString("\n")}")
-
-        //TODO: getAssigned
-        // schedule forward
       }
     } catch {
       case ex: Throwable => error("Cannot recover old data.", ex)
