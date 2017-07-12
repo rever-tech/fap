@@ -76,8 +76,7 @@ class DataSection(val identity: String,
   def write(schema: Option[JsonSchema], record: ConsumerRecord[Integer, String]): Unit = {
     val (fileName, recordValue) = schema match {
       case Some(s) => (fileNamingStrategy.getFileName(record.topic(), record.key().toString, record.timestamp()), record.value())
-      case None => (fileNamingStrategy.getFileName(record.topic(), "unknown", record.timestamp()),
-        s"""{"topic": "${record.topic()}", "version": ${record.key()}, "value": ${Literal(Constant(record.value())).toString}}""")
+      case None => (fileNamingStrategy.getFileName(record.topic(), "unknown", record.timestamp()), record.value())
     }
     if (!files.contains(fileName)) {
       synchronized {
