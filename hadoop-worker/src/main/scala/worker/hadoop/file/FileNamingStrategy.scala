@@ -89,8 +89,6 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) with Logg
     }
   }
 
-  //  final val previousSectionInfo: TrieMap[String, (String, Long)] = TrieMap()
-
   /**
     * Return name and timestamp of section
     *
@@ -99,16 +97,17 @@ class TimeBasedStrategy(conf: Config) extends FileNamingStrategy(conf) with Logg
     * @return pair of section name and timestamp
     */
   override def getSectionInfo(topic: String, time: Long): (String, Long) = {
-    //    if(previousSectionInfo.containsKey(topic))
-    //    if (!(time < previousSectionInfo._2 + interval && previousSectionInfo._2 <= time)) {
-    //      val itvTime = TimeUtil.roundTimeByInterval(time, interval)
-    //      previousSectionInfo = (s"$topic-${TimeUtil.formatDateToMinute(itvTime)}", itvTime)
-    //    }
-    //    previousSectionInfo
-
     debugResult("get Section info: %s") {
       val itvTime = TimeUtil.roundTimeByInterval(time, interval)
       (s"$topic-${TimeUtil.formatDateToMinute(itvTime)}", itvTime)
     }
+  }
+}
+
+class TimeBasedWithSizeStrategy(config: Config) extends TimeBasedStrategy(config) with Logging {
+
+  override def isFileNeedTobeSplit(file: DataFile): Boolean = {
+    file.writer.getCurrentSize()
+    false
   }
 }
