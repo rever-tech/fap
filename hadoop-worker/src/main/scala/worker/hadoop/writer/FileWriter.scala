@@ -82,19 +82,6 @@ class TextFileWriter(filePath: String, schema: JsonSchema, conf: Map[String, Str
   override val fileExtension: String = "log"
 
   private var currentSize: Long = 0
-  //  private val outputStream = new BufferedWriter(new OutputStreamWriter(
-  //    {
-  //      val hadoopConf = {
-  //        val tmp = new Configuration()
-  //        if (conf != null) {
-  //          conf.foreach(c => tmp.set(c._1, c._2))
-  //        }
-  //        tmp
-  //      }
-  //      val path = new Path(getFileNameWithExtension)
-  //      path.getFileSystem(hadoopConf).create(path)
-  //    }
-  //    , "UTF-8"))
 
   private val outputStream = {
     val hadoopConf = {
@@ -165,5 +152,56 @@ object TextFileWriter {
     }
 
     fieldValueAsString.replaceAll("[\t\r\n]", "")
+  }
+}
+
+/**
+  * This writer is schema-independence
+  *
+  * @param filePath Full path of file, without file extension (auto add based on implementation)
+  * @param schema   Schema of file
+  * @param conf     Configuration for writer
+  */
+class JsonFileWriter(filePath: String, schema: JsonSchema, conf: Map[String, String]) extends FileWriter[String](filePath, schema, conf) {
+  /**
+    * File extension, must define when implement
+    */
+  override val fileExtension: String = "json"
+
+  private val outputStream = {
+    val hadoopConf = {
+      val tmp = new Configuration()
+      if (conf != null) {
+        conf.foreach(c => tmp.set(c._1, c._2))
+      }
+      tmp
+    }
+    val path = new Path(getFileNameWithExtension)
+    path.getFileSystem(hadoopConf).create(path)
+  }
+
+  /**
+    * Write object to file
+    *
+    * @param obj string represent json object
+    */
+  override def writeObject(obj: String): Unit = {
+    val bytes = obj.getBytes("UTF-8")
+    if (outputStream.size() > 0) {
+      outputStream.writeChar('\n')
+    }
+    outputStream.write(bytes)
+  }
+
+  /**
+    * Get current size of file (total size, includes in-memory size)
+    *
+    * @return
+    */
+  override def getCurrentSize(): Long = outputStream.size()
+
+  override def close(): Unit = {
+    outputStream.flush()
+    outputStream.close()
   }
 }
