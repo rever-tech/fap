@@ -8,7 +8,13 @@ projects
 
 ## Deployment
 
-### Clean up config before update
+Requirements:
+
+- docker 1.13.0+
+- docker-compose 1.10.0+
+- maven 3
+
+### Clean up project config before update
 
 ```bash
 ./cleanup_conf.sh
