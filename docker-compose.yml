@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  kafka:
+    image: r3v3r/kafka
+    volumes:
+      - ./services/kafka/server.properties:/opt/zookeeper/conf/server.properties
+      - ./data/kafka:/opt/kafka/data
+    command: kafka-server
+  zk:
+    image: r3v3r/zookeeper
+    volumes:
+      - ./services/zookeeper:/opt/zookeeper/conf
+      - ./data/zookeeper:/opt/zookeeper/data
+  hadoop:
+    image: sequenceiq/hadoop-docker:2.6.0
+    command: /etc/bootstrap.sh -bash
+
+  collector:
+    build: ./collector
+    ports:
+      - 10111:10111
+    volumes:
+      - ./data/collector:/project
+    command: startservice development
+
+  hadoop-worker:
+    build: ./hadoop-worker
+    volumes:
+      - ./data/hadoop-worker:/project
+    command: startservice development
+
+  schemamanager:
+    build: ./schemamanager
+    volumes:
+      - ./data/schemamanager:/project
+    command: startservice development
